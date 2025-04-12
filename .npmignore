@@ -1,0 +1,12 @@
+src/tests/
+tests/
+examples/
+.vscode/
+.idea/
+*.test.tsx
+*.test.ts
+*.spec.ts
+*.spec.tsx
+tsconfig.json
+vite.config.ts
+jest.config.js

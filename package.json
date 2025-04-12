@@ -1,0 +1,52 @@
+{
+  "name": "react-helmet-pro",
+  "version": "1.0.0",
+  "description": "A modern head manager for React, inspired by react-helmet with additional features and async support.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "vite --config examples/vite.config.examples.ts",
+    "test": "pnpm exec vitest run --pool=forks --poolOptions.forks.singleFork=true",
+    "test:watch": "vitest --pool=forks --poolOptions.forks.singleFork=true --max-old-space-size=4096",
+    "lint": "eslint . --ext .ts,.tsx",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "helmet",
+    "head",
+    "meta",
+    "SEO",
+    "async",
+    "ssr",
+    "react-helmet-pro"
+  ],
+  "author": "LAHIRU UDAYAKUMARA",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.1.1"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lahiruudayakumara/react-helmet-pro.git"
+  }
+}
