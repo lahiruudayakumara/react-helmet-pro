@@ -1,0 +1,1 @@
+export const HEAD_TAGS = ['title', 'meta', 'link', 'script', 'style'];
