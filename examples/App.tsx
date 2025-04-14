@@ -1,7 +1,7 @@
 import {
   Analytics,
   Favicon,
-  Head,
+  Helmet,
   HelmetProvider,
   SecurityMeta,
   StructuredData,
@@ -58,7 +58,7 @@ const HeadContent: React.FC = () => {
   return (
     <div>
       <Favicon href="./vite.svg" />
-      <Head title={title} meta={meta} />
+      <Helmet title={title} meta={meta} />
       <StructuredData json={structuredData} />
       <SecurityMeta />
       <h1>Welcome to the Example App</h1>

@@ -55,7 +55,7 @@ function App() {
 ```tsx
 import { Head } from 'react-helmet-pro';
 
-<Head
+<Helmet
   title="About Us"
   meta={[
     { name: 'description', content: 'Learn about our company' },
@@ -116,7 +116,7 @@ useHeadMiddleware(withSiteSuffix);
 
 ## 📄 Components API
 
-### `<Head />`
+### `<Helmet />`
 
 | Prop   | Type                        | Description              |
 |--------|-----------------------------|--------------------------|
@@ -180,7 +180,7 @@ npm run test
 Example test:
 
 ```tsx
-render(<Head title="Test Page" />);
+render(<Helmet title="Test Page" />);
 expect(document.title).toBe("Test Page");
 ```
 

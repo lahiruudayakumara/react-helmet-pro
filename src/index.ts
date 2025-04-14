@@ -1,4 +1,4 @@
-export * from './components/Head';
+export * from './components/Helmet';
 export * from './components/StructuredData';
 export * from './components/Favicon';
 export * from './components/Analytics';

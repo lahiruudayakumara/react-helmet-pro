@@ -3,12 +3,12 @@ import React, { useContext, useEffect } from "react";
 import { HelmetContext } from "../context/HelmetContext";
 import { updateTag } from "../core/HeadManager";
 
-interface HeadProps {
+interface HelmetProps {
   title?: string;
   meta?: { name: string; content: string }[];
 }
 
-export const Head: React.FC<HeadProps> = ({ title, meta }) => {
+export const Helmet: React.FC<HelmetProps> = ({ title, meta }) => {
   const context = useContext(HelmetContext)!;
 
   useEffect(() => {
