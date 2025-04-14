@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { HelmetProvider } from '../src/context/HelmetProvider';
 import React from 'react';
 import { renderHook } from '@testing-library/react';

@@ -1,6 +1,8 @@
+import '@testing-library/jest-dom';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Head } from '../src/components/Head';
+import { Helmet } from '../src/components/Helmet';
 import { HelmetContext } from '../src/context/HelmetContext';
 import React from 'react';
 import { render } from '@testing-library/react';
@@ -27,7 +29,7 @@ describe('Head Component', () => {
   it('sets document title when provided', () => {
     render(
       <HelmetContext.Provider value={{ setHead: vi.fn() }}>
-        <Head title="Test Title" />
+        <Helmet title="Test Title" />
       </HelmetContext.Provider>
     );
     expect(document.title).toBe('Test Title');
@@ -36,7 +38,7 @@ describe('Head Component', () => {
   it('does not set document title when title is undefined', () => {
     render(
       <HelmetContext.Provider value={{ setHead: vi.fn() }}>
-        <Head />
+        <Helmet />
       </HelmetContext.Provider>
     );
     expect(document.title).toBe('');
@@ -45,7 +47,7 @@ describe('Head Component', () => {
   it('adds meta tags to head', () => {
     render(
       <HelmetContext.Provider value={{ setHead: vi.fn() }}>
-        <Head
+        <Helmet
           meta={[
             { name: 'description', content: 'Test Description' },
             { name: 'keywords', content: 'test, vitest' },
@@ -63,7 +65,7 @@ describe('Head Component', () => {
   it('removes meta tags on unmount', () => {
     const { unmount } = render(
       <HelmetContext.Provider value={{ setHead: vi.fn() }}>
-        <Head meta={[{ name: 'description', content: 'Test' }]} />
+        <Helmet meta={[{ name: 'description', content: 'Test' }]} />
       </HelmetContext.Provider>
     );
     expect(document.querySelector('meta')).not.toBeNull();
@@ -75,7 +77,7 @@ describe('Head Component', () => {
     const setHeadSpy = vi.fn();
     render(
       <HelmetContext.Provider value={{ setHead: setHeadSpy }}>
-        <Head title="Test Title" meta={[{ name: 'description', content: 'Test' }]} />
+        <Helmet title="Test Title" meta={[{ name: 'description', content: 'Test' }]} />
       </HelmetContext.Provider>
     );
     expect(setHeadSpy).toHaveBeenCalledWith({
@@ -87,7 +89,7 @@ describe('Head Component', () => {
   it('handles empty meta array', () => {
     render(
       <HelmetContext.Provider value={{ setHead: vi.fn() }}>
-        <Head title="Test Title" meta={[]} />
+        <Helmet title="Test Title" meta={[]} />
       </HelmetContext.Provider>
     );
     expect(document.title).toBe('Test Title');
