@@ -53,7 +53,7 @@ function App() {
 ### Add Title and Meta Tags
 
 ```tsx
-import { Head } from 'react-helmet-pro';
+import { Helmet } from 'react-helmet-pro';
 
 <Helmet
   title="About Us"
@@ -114,6 +114,128 @@ useHeadMiddleware(withSiteSuffix);
 
 ---
 
+
+## 🧠 Next.js Usage
+
+`react-helmet-pro` works seamlessly with **Next.js**, including full support for **Server Side Rendering (SSR)** and **App Router**. Follow these steps to integrate it:
+
+### 1. Setup in `app/layout.tsx`
+
+Wrap your app in the `HelmetProvider`:
+
+```tsx
+// app/layout.tsx (App Router)
+import './globals.css';
+import { HelmetProvider } from 'react-helmet-pro';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <HelmetProvider>{children}</HelmetProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+> 💡 Note: `HelmetProvider` must be used inside the `<body>` tag, not the `<head>` in App Router.
+
+---
+
+### 2. Use `<Helmet />` in any component
+
+```tsx
+// app/about/page.tsx or any client component
+'use client';
+
+import { Helmet } from 'react-helmet-pro';
+
+export default function AboutPage() {
+  return (
+    <>
+      <Helmet
+        title="About Us"
+        meta={[
+          { name: 'description', content: 'Learn about our company' },
+          { name: 'keywords', content: 'company, team, about' },
+        ]}
+      />
+      <h1>About Us</h1>
+    </>
+  );
+}
+```
+
+---
+
+### 3. Enable SSR Head Tag Extraction (Optional)
+
+If you are using **custom SSR setup** with `getServerSideProps` or want finer control, you can extract head tags server-side:
+
+```tsx
+// In custom _document.tsx for SSR
+import Document, { Html, Head, Main, NextScript } from 'next/document';
+import { collectHelmetTags } from 'react-helmet-pro';
+
+class MyDocument extends Document {
+  static async getInitialProps(ctx) {
+    const initialProps = await Document.getInitialProps(ctx);
+    const helmetTags = collectHelmetTags(/* your Helmet elements */);
+
+    return {
+      ...initialProps,
+      helmetTags,
+    };
+  }
+
+  render() {
+    // Inject head tags here if extracted manually
+    return (
+      <Html>
+        <Head>
+          {/* SSR extracted tags can go here if needed */}
+        </Head>
+        <body>
+          <Main />
+          <NextScript />
+        </body>
+      </Html>
+    );
+  }
+}
+
+export default MyDocument;
+```
+
+---
+
+### 4. Middleware Support in Next.js
+
+```tsx
+// client/components/HeadWrapper.tsx
+'use client';
+
+import { useHelmetMiddleware } from 'react-helmet-pro';
+import { withSiteSuffix } from '../middleware/withSiteSuffix';
+
+export default function HeadWrapper() {
+  useHelmetMiddleware(withSiteSuffix);
+  return null;
+}
+```
+
+Use `HelmetWrapper` at the top of your page/component to apply middleware.
+
+---
+
+### 🛑 Common Gotchas in Next.js
+
+- **Hydration Mismatch Warning**: Avoid using dynamic data like `Date.now()` or `Math.random()` in head tags without guards (`typeof window !== 'undefined'`) or snapshotting.
+- Always mark `Helmet` and `StructuredData` usage in `use client` components.
+
+---
+
 ## 📄 Components API
 
 ### `<Helmet />`
@@ -158,12 +280,12 @@ Injects security-related meta tags like CSP, XSS protection, nosniff headers, et
 
 ## 🧪 SSR Support
 
-### Server-side Head Tag Extraction
+### Server-side Helmet Tag Extraction
 
 ```tsx
-import { collectHeadTags } from 'react-helmet-pro';
+import { collectHelmetTags } from 'react-helmet-pro';
 
-const headTags = collectHeadTags(/* JSX head elements */);
+const headTags = collectHelmetTags(/* JSX head elements */);
 // Use this to inject into SSR-rendered HTML
 ```
 
