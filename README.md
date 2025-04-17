@@ -13,9 +13,9 @@
 - 📊 Google Analytics integration
 - 🌐 Favicons & SEO helpers
 - 🔐 Security meta tags (CSP, nosniff, etc.)
-- 🌍 SSR-friendly with `collectHeadTags()`
-- 🧱 Middleware support for reusable head logic
-- 🔁 Context API for global head state
+- 🌍 SSR-friendly with `collectHelmetTags()`
+- 🧱 Middleware support for reusable helmet logic
+- 🔁 Context API for global helmet state
 - 🔌 TypeScript support out of the box
 
 ---
@@ -106,10 +106,10 @@ export const withSiteSuffix = (head) => {
 Apply it in your component:
 
 ```tsx
-import { useHeadMiddleware } from 'react-helmet-pro';
+import { useHelmetMiddleware } from 'react-helmet-pro';
 import { withSiteSuffix } from './middleware/withSiteSuffix';
 
-useHeadMiddleware(withSiteSuffix);
+useHelmetMiddleware(withSiteSuffix);
 ```
 
 ---
