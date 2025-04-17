@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 
 export const Analytics = ({ type, id }: { type: "gtag"; id: string }) => {

@@ -1,3 +1,5 @@
+"use client";
+
 import { updateTag } from "../core/HeadManager";
 import { useEffect } from "react";
 
