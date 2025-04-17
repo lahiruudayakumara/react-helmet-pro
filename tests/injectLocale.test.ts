@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { injectLocale } from '../src/middlewares/injectLocale';
 
 describe('injectLocale', () => {
