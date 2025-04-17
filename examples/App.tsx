@@ -8,9 +8,9 @@ import {
   appendSiteName,
   buildSchema,
   injectLocale,
-  mergeHead,
-  useHead,
-  useHeadMiddleware,
+  mergeHelmet,
+  useHelmet,
+  useHelmetMiddleware,
 } from "react-helmet-pro";
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -27,11 +27,11 @@ const App: React.FC = () => {
 };
 
 const HeadContent: React.FC = () => {
-  const { setHead, title, meta } = useHead();
+  const { setHead, title, meta } = useHelmet();
   const [prevHead, setPrevHead] = useState<any>(null);
 
-  useHeadMiddleware(appendSiteName, [title, meta]);
-  useHeadMiddleware((head) => injectLocale(head, "en"), [title, meta]);
+  useHelmetMiddleware(appendSiteName, [title, meta]);
+  useHelmetMiddleware((head) => injectLocale(head, "en"), [title, meta]);
 
   const structuredData = buildSchema("WebPage", {
     name: "Example WebPage",
@@ -39,7 +39,7 @@ const HeadContent: React.FC = () => {
   });
 
   const mergedHead = useMemo(() => {
-    return mergeHead(
+    return mergeHelmet(
       { title, meta },
       {
         title: "Home Page",
