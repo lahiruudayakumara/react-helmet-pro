@@ -7,10 +7,13 @@ import { updateTag } from "../core/HeadManager";
 
 interface HelmetProps {
   title?: string;
-  meta?: { name: string; content: string }[];
+  meta?: { name?: string; property?: string; content: string }[];
+  link?: { rel: string; href: string }[];
+  script?: { src: string; async?: boolean; defer?: boolean }[];
+  htmlAttributes?: { [key: string]: string };
 }
 
-export const Helmet: React.FC<HelmetProps> = ({ title, meta }) => {
+export const Helmet: React.FC<HelmetProps> = ({ title, meta, link, script }) => {
   const context = useContext(HelmetContext)!;
 
   useEffect(() => {
@@ -19,7 +22,7 @@ export const Helmet: React.FC<HelmetProps> = ({ title, meta }) => {
     }
     const tags: HTMLElement[] = [];
     meta?.forEach((m) => {
-      const tag = updateTag("meta", m);
+      const tag = updateTag("meta", { name: m.name, property: m.property, content: m.content });
       tags.push(tag);
     });
 
@@ -29,7 +32,10 @@ export const Helmet: React.FC<HelmetProps> = ({ title, meta }) => {
   }, [title, meta]);
 
   useEffect(() => {
-    context?.setHead({ title, meta });
+    context?.setHead({ 
+      title, 
+      meta: meta?.filter((m) => m.name !== undefined) as { name: string; content: string }[] 
+    });
   }, [title, meta, context]);
 
   return null;
