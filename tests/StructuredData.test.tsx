@@ -1,4 +1,5 @@
-import React from 'react';
+import { describe, expect, it } from 'vitest';
+
 import { StructuredData } from '../src/components/StructuredData';
 import { render } from '@testing-library/react';
 
