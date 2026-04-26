@@ -1,5 +1,6 @@
 export * from './components/Helmet';
 export * from './components/StructuredData';
+export * from './components/JsonLdScript';
 export * from './components/Favicon';
 export * from './components/Analytics';
 export * from './components/SecurityMeta';
@@ -13,4 +14,5 @@ export * from './middlewares/injectLocale';
 export * from './utils/mergeHelmet';
 export * from './utils/schemaBuilder';
 export * from './utils/tagFactory';
+export * from './next';
 export * from './types';
