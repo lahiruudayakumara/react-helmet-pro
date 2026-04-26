@@ -1,6 +1,6 @@
 # React Helmet Pro
 
-**React Helmet Pro** is an advanced, modular, and SSR compatible head manager for React applications. It provides a clean and powerful API for dynamically managing `<title>`, `<meta>`, `<link>`, `<script>`, structured data, favicons, analytics, and security headers designed for real world production use.
+**React Helmet Pro** is an advanced, modular, and SSR compatible head manager for React applications. It now supports the familiar `react-helmet` / `react-helmet-async` API alongside its higher-level helpers for structured data, analytics, favicons, and security metadata.
 
 > Robust head management for SEO, analytics, and SSR made simple.
 
@@ -8,7 +8,13 @@
 
 ## Features
 
--  Dynamic `<title>`, `<meta>`, `<link>`, `<script>` injection
+- `react-helmet`-style child tag API
+- `react-helmet-async`-style `HelmetProvider` request context
+- Dynamic `<title>`, `<base>`, `<meta>`, `<link>`, `<script>`, `<style>`, `<noscript>` injection
+- `htmlAttributes`, `bodyAttributes`, and `titleAttributes`
+- `titleTemplate`, `defaultTitle`, `defer`, and `onChangeClientState`
+- `Helmet.renderStatic()`, `Helmet.peek()`, and `HelmetData`
+- SEO tag prioritization for SSR via `prioritizeSeoTags`
 - JSON-LD Structured Data support
 - Google Analytics integration
 - Favicons & SEO helpers
@@ -55,12 +61,20 @@ function App() {
 ```tsx
 import { Helmet } from 'react-helmet-pro';
 
+<Helmet>
+  <title>About Us</title>
+  <meta name="description" content="Learn about our company" />
+  <meta name="keywords" content="company, team, about" />
+  <link rel="canonical" href="https://example.com/about" />
+</Helmet>
+```
+
+You can still use the prop-based shorthand if you prefer:
+
+```tsx
 <Helmet
   title="About Us"
-  meta={[
-    { name: 'description', content: 'Learn about our company' },
-    { name: 'keywords', content: 'company, team, about' },
-  ]}
+  meta={[{ name: 'description', content: 'Learn about our company' }]}
 />
 ```
 
@@ -174,38 +188,55 @@ export default function AboutPage() {
 If you are using **custom SSR setup** with `getServerSideProps` or want finer control, you can extract head tags server-side:
 
 ```tsx
-// In custom _document.tsx for SSR
-import Document, { Html, Head, Main, NextScript } from 'next/document';
-import { collectHelmetTags } from 'react-helmet-pro';
+import { renderToString } from 'react-dom/server';
+import { Helmet, HelmetProvider } from 'react-helmet-pro';
 
-class MyDocument extends Document {
-  static async getInitialProps(ctx) {
-    const initialProps = await Document.getInitialProps(ctx);
-    const helmetTags = collectHelmetTags(/* your Helmet elements */);
+const helmetContext = {};
 
-    return {
-      ...initialProps,
-      helmetTags,
-    };
-  }
+const app = (
+  <HelmetProvider context={helmetContext}>
+    <App />
+  </HelmetProvider>
+);
 
-  render() {
-    // Inject head tags here if extracted manually
-    return (
-      <Html>
-        <Head>
-          {/* SSR extracted tags can go here if needed */}
-        </Head>
-        <body>
-          <Main />
-          <NextScript />
-        </body>
-      </Html>
-    );
-  }
-}
+renderToString(app);
 
-export default MyDocument;
+const { helmet } = helmetContext;
+
+const html = `
+  <!doctype html>
+  <html ${helmet.htmlAttributes.toString()}>
+    <head>
+      ${helmet.title.toString()}
+      ${helmet.priority.toString()}
+      ${helmet.meta.toString()}
+      ${helmet.link.toString()}
+      ${helmet.script.toString()}
+      ${helmet.style.toString()}
+    </head>
+    <body ${helmet.bodyAttributes.toString()}>
+      <div id="root"></div>
+    </body>
+  </html>
+`;
+```
+
+If you need SSR collection without a provider, use `HelmetData`:
+
+```tsx
+import { Helmet, HelmetData } from 'react-helmet-pro';
+
+const helmetData = new HelmetData({});
+
+renderToString(
+  <App>
+    <Helmet helmetData={helmetData}>
+      <title>Standalone SSR</title>
+    </Helmet>
+  </App>
+);
+
+const { helmet } = helmetData.context;
 ```
 
 ---
