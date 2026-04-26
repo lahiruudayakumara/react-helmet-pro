@@ -45,6 +45,33 @@ The new Next.js helpers are framework-agnostic utilities, so you can use them in
 
 ---
 
+## Feature Comparison
+
+This table compares the documented feature surface of `react-helmet-pro`, `react-helmet`, `react-helmet-async`, and the Next.js App Router Metadata API.
+
+`Partial` means the capability exists, but not as a first-class helper in that tool.
+
+| Capability | `react-helmet-pro` | `react-helmet` | `react-helmet-async` | Next.js Metadata API |
+|------------|--------------------|----------------|----------------------|----------------------|
+| Helmet-style child tag API | Yes | Yes | Yes | No |
+| Thread-safe SSR context per request | Yes | No | Yes | Server-only metadata model |
+| `Helmet.renderStatic()` style extraction | Yes | Yes | No | No |
+| `HelmetData` usage without a provider | Yes | No | Yes | No |
+| `prioritizeSeoTags` SSR output | Yes | No | Yes | No |
+| Next.js `metadata` / `generateMetadata` helper builders | Yes | No | No | Built in |
+| Next.js `viewport` / `generateViewport` helper builders | Yes | No | No | Built in |
+| Next.js `robots.ts` / `sitemap.ts` / `manifest.ts` builders | Yes | No | No | Built in |
+| JSON-LD helper component | Yes | No | No | Partial |
+| Analytics helper component | Yes | No | No | No |
+| Security meta helper component | Yes | No | No | Partial |
+| Middleware hook for reusable head transforms | Yes | No | No | No |
+| Built-in helper for reading live Helmet state | Yes | No | No | No |
+| `<base>`, `<noscript>`, inline `<script>`, inline `<style>` support through a Helmet API | Yes | Yes | Yes | No in metadata config |
+
+If you are using App Router, Next.js itself is the best fit for canonical SEO fields like title, description, Open Graph, Twitter cards, robots, sitemap, and manifest. `react-helmet-pro` is meant to complement that with helper builders, JSON-LD helpers, and a Helmet API for the head tags the Metadata API does not model directly.
+
+---
+
 # Basic Usage
 
 ### Wrap Your App
