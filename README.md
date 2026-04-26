@@ -1,4 +1,12 @@
-# React Helmet Pro
+## React Helmet Pro
+
+[![npm version](https://img.shields.io/npm/v/react-helmet-pro.svg)](https://www.npmjs.com/package/react-helmet-pro)
+[![License](https://img.shields.io/github/license/opencorex-org/react-helmet-pro)](LICENSE)
+[![Build Status](https://github.com/lahiruudayakumara/react-helmet-pro/actions/workflows/build.yml/badge.svg)](https://github.com/lahiruudayakumara/react-helmet-pro/actions)
+[![npm downloads](https://img.shields.io/npm/dm/react-helmet-pro.svg)](https://www.npmjs.com/package/react-helmet-pro)
+[![GitHub stars](https://img.shields.io/github/stars/opencorex-org/react-helmet-pro?style=social)](https://github.com/opencorex-org/react-helmet-pro)
+[![GitHub issues](https://img.shields.io/github/issues/opencorex-org/react-helmet-pro)](https://github.com/opencorex-org/react-helmet-pro/issues)
+[![Code Coverage](https://img.shields.io/codecov/c/github/lahiruudayakumara/react-helmet-pro)](https://codecov.io/gh/opencorex-org/react-helmet-pro)
 
 **React Helmet Pro** is an advanced, modular, and SSR compatible head manager for React applications. It now supports the familiar `react-helmet` / `react-helmet-async` API alongside its higher-level helpers for structured data, analytics, favicons, and security metadata.
 
@@ -38,7 +46,6 @@ pnpm add react-helmet-pro
 
 # yarn
 yarn add react-helmet-pro
-
 ```
 
 The new Next.js helpers are framework-agnostic utilities, so you can use them in a Next.js app without adding any extra runtime dependency from this package.
@@ -635,8 +642,7 @@ expect(document.title).toBe("Test Page");
 
 ## Contributing
 
-We welcome all contributions!  
-To get started:
+We welcome all contributions! To get started:
 
 ```bash
 git clone https://github.com/lahiruudayakumara/react-helmet-pro.git
@@ -653,12 +659,6 @@ Please open an issue or pull request if you find bugs or have feature requests.
 
 - Email: [udayakumara.wdl@gmail.com](mailto:udayakumara.wdl@gmail.com)
 - Website: [https://lahiruudayakumara.com](https://lahiruudayakumara.com)
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
