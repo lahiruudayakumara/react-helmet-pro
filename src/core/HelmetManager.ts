@@ -23,6 +23,7 @@ const ATTRIBUTE_NAME_MAP: Record<string, string> = {
   charSet: "charset",
   className: "class",
   crossOrigin: "crossorigin",
+  hrefLang: "hreflang",
   httpEquiv: "http-equiv",
   itemProp: "itemprop",
 };
