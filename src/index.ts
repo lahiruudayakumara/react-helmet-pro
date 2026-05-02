@@ -1,4 +1,5 @@
 export * from './components/Helmet';
+export * from './components/Seo';
 export * from './components/StructuredData';
 export * from './components/JsonLdScript';
 export * from './components/Favicon';
