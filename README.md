@@ -19,6 +19,7 @@
 - `react-helmet`-style child tag API
 - `react-helmet-async`-style `HelmetProvider` request context
 - Dynamic `<title>`, `<base>`, `<meta>`, `<link>`, `<script>`, `<style>`, `<noscript>` injection
+- High-level `<Seo />` component for common SEO tags
 - `htmlAttributes`, `bodyAttributes`, and `titleAttributes`
 - `titleTemplate`, `defaultTitle`, `defer`, and `onChangeClientState`
 - `Helmet.renderStatic()`, `Helmet.peek()`, and `HelmetData`
@@ -69,6 +70,7 @@ This table compares the documented feature surface of `react-helmet-pro`, `react
 | Next.js `viewport` / `generateViewport` helper builders | Yes | No | No | Built in |
 | Next.js `robots.ts` / `sitemap.ts` / `manifest.ts` builders | Yes | No | No | Built in |
 | JSON-LD helper component | Yes | No | No | Partial |
+| High-level SEO helper component | Yes | No | No | No |
 | Analytics helper component | Yes | No | No | No |
 | Security meta helper component | Yes | No | No | Partial |
 | Middleware hook for reusable head transforms | Yes | No | No | No |
@@ -114,6 +116,29 @@ You can still use the prop-based shorthand if you prefer:
 <Helmet
   title="About Us"
   meta={[{ name: 'description', content: 'Learn about our company' }]}
+/>
+```
+
+### Use The High-Level SEO Helper
+
+```tsx
+import { Seo } from 'react-helmet-pro';
+
+<Seo
+  title="About Us"
+  description="Learn about our company"
+  canonical="https://example.com/about"
+  keywords={['company', 'team', 'about']}
+  openGraph={{
+    title: 'About Us',
+    type: 'website',
+    url: 'https://example.com/about',
+    images: [{ url: 'https://example.com/og/about.png', alt: 'About page preview' }],
+  }}
+  twitter={{
+    creator: '@example',
+    images: ['https://example.com/og/about.png'],
+  }}
 />
 ```
 
@@ -501,6 +526,31 @@ Supports both child tags and prop shorthand.
 | `defer` | `boolean` | Defers DOM updates with `requestAnimationFrame` |
 | `onChangeClientState` | function | Receives `newState`, `addedTags`, and `removedTags` after client updates |
 | `helmetData` | `HelmetData` | Lets you collect state outside a provider, especially for SSR |
+
+---
+
+### `<Seo />`
+
+High-level SEO helper built on top of `Helmet`.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `title` | `string` | Sets the page title |
+| `description` | `string` | Standard meta description |
+| `canonical` | `string` | Canonical URL |
+| `keywords` | `string[]` | Keywords meta content |
+| `author` | `string` | Author meta content |
+| `locale` | `string` | Also used as `<html lang>` when no `lang` is already set |
+| `siteName` | `string` | Fallback Open Graph site name |
+| `alternates` | `SeoAlternateLink[]` | Hreflang and alternate links |
+| `robots` | `SeoRobotsDirectives` | Builds `robots` and `googlebot` meta tags |
+| `openGraph` | `SeoOpenGraph` | Open Graph tags, including article metadata and image fields |
+| `twitter` | `SeoTwitter` | Twitter card tags |
+| `verification` | `SeoVerification` | Search engine/site verification tags |
+| `jsonLd` | `object \| object[]` | Optional JSON-LD payloads rendered as script tags |
+| `extraMeta` | `MetaTag[]` | Extra meta tags to append |
+| `extraLink` | `LinkTag[]` | Extra link tags to append |
+| `htmlAttributes` | `HelmetAttributes` | Additional `<html>` attributes |
 
 ---
 

@@ -3,6 +3,7 @@ import {
   Helmet,
   HelmetProvider,
   JsonLdScript,
+  Seo,
   SecurityMeta,
   StructuredData,
   buildNextManifest,
@@ -314,6 +315,28 @@ const ExamplePlayground: React.FC = () => {
     <>
       <Favicon href="assets/logo.png" />
       <SecurityMeta />
+      <Seo
+        alternates={[
+          { href: `${page.canonical}?lang=en`, hrefLang: "en" },
+          { href: `${page.canonical}?lang=de`, hrefLang: "de" },
+        ]}
+        canonical={page.canonical}
+        description={page.description}
+        keywords={page.keywords}
+        locale={locale}
+        openGraph={{
+          images: [{ alt: `${page.title} preview`, url: page.image }],
+          title: `${page.title} Example`,
+          type: pageKey === "docs" ? "article" : "website",
+          url: page.canonical,
+        }}
+        siteName="React Helmet Pro"
+        title={`${page.title} Example`}
+        twitter={{
+          creator: "@reacthelmetpro",
+          images: [page.image],
+        }}
+      />
 
       <Helmet
         defaultTitle="React Helmet Pro Playground"
@@ -328,16 +351,6 @@ const ExamplePlayground: React.FC = () => {
         <html data-demo-page={pageKey} />
         <body data-locale={locale} />
         <title>{`${page.title} Example`}</title>
-        <meta name="description" content={page.description} />
-        <meta name="keywords" content={page.keywords.join(", ")} />
-        <meta property="og:title" content={`${page.title} Example`} />
-        <meta property="og:description" content={page.description} />
-        <meta property="og:image" content={page.image} />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${page.title} Example`} />
-        <meta name="twitter:description" content={page.description} />
-        <link rel="canonical" href={page.canonical} />
       </Helmet>
 
       <Helmet
