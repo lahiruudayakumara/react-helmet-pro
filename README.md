@@ -19,6 +19,8 @@
 - `react-helmet`-style child tag API
 - `react-helmet-async`-style `HelmetProvider` request context
 - Dynamic `<title>`, `<base>`, `<meta>`, `<link>`, `<script>`, `<style>`, `<noscript>` injection
+- High-level `<Seo />` component for common SEO tags
+- `<ArticleSeo />` plus breadcrumb and FAQ rich-result helpers
 - `htmlAttributes`, `bodyAttributes`, and `titleAttributes`
 - `titleTemplate`, `defaultTitle`, `defer`, and `onChangeClientState`
 - `Helmet.renderStatic()`, `Helmet.peek()`, and `HelmetData`
@@ -69,6 +71,7 @@ This table compares the documented feature surface of `react-helmet-pro`, `react
 | Next.js `viewport` / `generateViewport` helper builders | Yes | No | No | Built in |
 | Next.js `robots.ts` / `sitemap.ts` / `manifest.ts` builders | Yes | No | No | Built in |
 | JSON-LD helper component | Yes | No | No | Partial |
+| High-level SEO helper component | Yes | No | No | No |
 | Analytics helper component | Yes | No | No | No |
 | Security meta helper component | Yes | No | No | Partial |
 | Middleware hook for reusable head transforms | Yes | No | No | No |
@@ -115,6 +118,68 @@ You can still use the prop-based shorthand if you prefer:
   title="About Us"
   meta={[{ name: 'description', content: 'Learn about our company' }]}
 />
+```
+
+### Use The High-Level SEO Helper
+
+```tsx
+import { Seo } from 'react-helmet-pro';
+
+<Seo
+  title="About Us"
+  description="Learn about our company"
+  canonical="https://example.com/about"
+  keywords={['company', 'team', 'about']}
+  openGraph={{
+    title: 'About Us',
+    type: 'website',
+    url: 'https://example.com/about',
+    images: [{ url: 'https://example.com/og/about.png', alt: 'About page preview' }],
+  }}
+  twitter={{
+    creator: '@example',
+    images: ['https://example.com/og/about.png'],
+  }}
+/>
+```
+
+### Add Article SEO and Rich-Result Schema
+
+```tsx
+import { ArticleSeo, BreadcrumbJsonLd, FAQJsonLd } from 'react-helmet-pro';
+
+<>
+  <ArticleSeo
+    title="Shipping SEO in React"
+    description="A practical guide to richer article metadata and JSON-LD."
+    canonical="https://example.com/blog/shipping-seo"
+    authors={['Jane Doe']}
+    publishedTime="2026-05-01T12:00:00.000Z"
+    modifiedTime="2026-05-02T09:30:00.000Z"
+    images={[{ url: 'https://example.com/og/article.png', alt: 'Article cover' }]}
+    publisher={{ name: 'Acme', logo: 'https://example.com/logo.png' }}
+    schemaType="BlogPosting"
+    section="Guides"
+    tags={['SEO', 'React']}
+  />
+
+  <BreadcrumbJsonLd
+    items={[
+      { name: 'Home', item: 'https://example.com' },
+      { name: 'Blog', item: 'https://example.com/blog' },
+      { name: 'Shipping SEO in React', item: 'https://example.com/blog/shipping-seo' },
+    ]}
+  />
+
+  <FAQJsonLd
+    entries={[
+      {
+        question: 'How do I add rich-result schema?',
+        answer: 'Use the built-in helpers for breadcrumbs, FAQs, and article pages.',
+      },
+    ]}
+  />
+</>
 ```
 
 ### Add JSON-LD Structured Data
@@ -504,6 +569,70 @@ Supports both child tags and prop shorthand.
 
 ---
 
+### `<Seo />`
+
+High-level SEO helper built on top of `Helmet`.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `title` | `string` | Sets the page title |
+| `description` | `string` | Standard meta description |
+| `canonical` | `string` | Canonical URL |
+| `keywords` | `string[]` | Keywords meta content |
+| `author` | `string` | Author meta content |
+| `locale` | `string` | Also used as `<html lang>` when no `lang` is already set |
+| `siteName` | `string` | Fallback Open Graph site name |
+| `alternates` | `SeoAlternateLink[]` | Hreflang and alternate links |
+| `robots` | `SeoRobotsDirectives` | Builds `robots` and `googlebot` meta tags |
+| `openGraph` | `SeoOpenGraph` | Open Graph tags, including article metadata and image fields |
+| `twitter` | `SeoTwitter` | Twitter card tags |
+| `verification` | `SeoVerification` | Search engine/site verification tags |
+| `jsonLd` | `object \| object[]` | Optional JSON-LD payloads rendered as script tags |
+| `extraMeta` | `MetaTag[]` | Extra meta tags to append |
+| `extraLink` | `LinkTag[]` | Extra link tags to append |
+| `htmlAttributes` | `HelmetAttributes` | Additional `<html>` attributes |
+
+---
+
+### `<ArticleSeo />`
+
+Purpose-built helper for editorial pages. It renders the standard `Seo` tags, article Open Graph tags, and an Article or BlogPosting JSON-LD payload together.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `title` | `string` | Article headline and page title |
+| `authors` | `Array<string \| { name, url? }>` | Author names or linked author descriptors |
+| `publishedTime` | `string` | `article:published_time` and JSON-LD publish date |
+| `modifiedTime` | `string` | `article:modified_time` and JSON-LD modified date |
+| `expirationTime` | `string` | Optional `article:expiration_time` |
+| `images` | `SeoImage[]` | Social preview images and schema image URLs |
+| `publisher` | `{ name, logo? }` | Publisher organization for JSON-LD |
+| `schemaType` | `'Article' \| 'BlogPosting' \| 'NewsArticle'` | Structured data type, defaults to `Article` |
+| `section` | `string` | Editorial section / category |
+| `tags` | `string[]` | Article tags for Open Graph |
+| `jsonLd` | `object \| object[]` | Additional JSON-LD payloads to append |
+| other `Seo` props | inherited | Includes `canonical`, `description`, `keywords`, `locale`, `twitter`, `robots`, `verification`, and more |
+
+---
+
+### `<BreadcrumbJsonLd />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `items` | `Array<{ name: string; item: string }>` | Breadcrumb trail entries in order |
+| `id` | `string` | Optional script element id |
+
+---
+
+### `<FAQJsonLd />`
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `entries` | `Array<{ question: string; answer: string }>` | FAQ question and answer pairs |
+| `id` | `string` | Optional script element id |
+
+---
+
 ### `<StructuredData />`
 
 Client-friendly JSON-LD helper built on top of `Helmet`.
@@ -524,6 +653,32 @@ Server-safe JSON-LD renderer for frameworks like Next.js App Router.
 | `data` | `unknown` | JSON-LD payload |
 | `type` | `string` | Optional script type, defaults to `application/ld+json` |
 | `id` and other script props | native script props | Passed through to the rendered `<script>` |
+
+---
+
+## Structured Data Builders
+
+If you want to build the schema yourself and render it through `StructuredData` or `JsonLdScript`, the package also exports:
+
+- `buildSchema()`
+- `buildArticleSchema()`
+- `buildBreadcrumbSchema()`
+- `buildFaqSchema()`
+
+Example:
+
+```tsx
+import { JsonLdScript, buildArticleSchema } from 'react-helmet-pro';
+
+<JsonLdScript
+  data={buildArticleSchema({
+    headline: 'Shipping SEO in React',
+    type: 'BlogPosting',
+    authors: ['Jane Doe'],
+    url: 'https://example.com/blog/shipping-seo',
+  })}
+/>
+```
 
 ---
 

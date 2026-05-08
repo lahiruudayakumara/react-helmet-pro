@@ -1,8 +1,12 @@
 import {
+  ArticleSeo,
+  BreadcrumbJsonLd,
+  FAQJsonLd,
   Favicon,
   Helmet,
   HelmetProvider,
   JsonLdScript,
+  Seo,
   SecurityMeta,
   StructuredData,
   buildNextManifest,
@@ -35,7 +39,7 @@ const pageContent: Record<
 > = {
   docs: {
     accent: "#4da6ff",
-    canonical: "",
+    canonical: "https://reacthelmetpro.dev/docs",
     description: "See the child-tag API, middleware flow, SSR helpers, and Next.js integrations in one place.",
     eyebrow: "Documentation Demo",
     image: "https://reacthelmetpro.dev/og/docs.png",
@@ -44,7 +48,7 @@ const pageContent: Record<
   },
   home: {
     accent: "#ff7a18",
-    canonical: "",
+    canonical: "https://reacthelmetpro.dev/",
     description: "Explore live head updates, JSON-LD helpers, and modern SEO utilities from one small demo app.",
     eyebrow: "Live Head Playground",
     image: "https://reacthelmetpro.dev/og/home.png",
@@ -53,7 +57,7 @@ const pageContent: Record<
   },
   pricing: {
     accent: "#2ec27e",
-    canonical: "",
+    canonical: "https://reacthelmetpro.dev/pricing",
     description: "Preview product pages, social metadata, and metadata route output before wiring them into a real app.",
     eyebrow: "Product Page Demo",
     image: "https://reacthelmetpro.dev/og/pricing.png",
@@ -168,6 +172,35 @@ const ExamplePlayground: React.FC = () => {
         url: page.canonical,
       }),
     [locale, page],
+  );
+
+  const breadcrumbItems = useMemo(
+    () =>
+      pageKey === "home"
+        ? [{ item: page.canonical, name: "Home" }]
+        : [
+            { item: pageContent.home.canonical, name: "Home" },
+            { item: page.canonical, name: page.title },
+          ],
+    [page, pageKey],
+  );
+
+  const faqEntries = useMemo(
+    () => [
+      {
+        answer:
+          pageKey === "docs"
+            ? "Use ArticleSeo for editorial pages, then add BreadcrumbJsonLd and FAQJsonLd for rich-result schema."
+            : "Use the high-level Seo component for common tags, then add focused schema helpers where the page deserves them.",
+        question: "How should this page improve SEO?",
+      },
+      {
+        answer:
+          "The example keeps canonical tags, social metadata, structured data, and Next.js metadata previews aligned from one set of page inputs.",
+        question: "What does this demo keep in sync?",
+      },
+    ],
+    [pageKey],
   );
 
   const nextMetadataPreview = useMemo(
@@ -314,6 +347,58 @@ const ExamplePlayground: React.FC = () => {
     <>
       <Favicon href="assets/logo.png" />
       <SecurityMeta />
+      {pageKey === "docs" ? (
+        <ArticleSeo
+          alternates={[
+            { href: `${page.canonical}?lang=en`, hrefLang: "en" },
+            { href: `${page.canonical}?lang=de`, hrefLang: "de" },
+          ]}
+          authors={["Lahiru Udayakumara"]}
+          canonical={page.canonical}
+          description={page.description}
+          images={[{ alt: `${page.title} preview`, url: page.image }]}
+          keywords={page.keywords}
+          locale={locale}
+          modifiedTime="2026-05-06T10:00:00.000Z"
+          publishedTime="2026-05-01T09:00:00.000Z"
+          publisher={{
+            logo: "https://reacthelmetpro.dev/logo.png",
+            name: "React Helmet Pro",
+          }}
+          schemaType="BlogPosting"
+          section="Documentation"
+          siteName="React Helmet Pro"
+          tags={["SEO", "React", "Next.js"]}
+          title={`${page.title} Example`}
+          twitter={{
+            creator: "@reacthelmetpro",
+            images: [page.image],
+          }}
+        />
+      ) : (
+        <Seo
+          alternates={[
+            { href: `${page.canonical}?lang=en`, hrefLang: "en" },
+            { href: `${page.canonical}?lang=de`, hrefLang: "de" },
+          ]}
+          canonical={page.canonical}
+          description={page.description}
+          keywords={page.keywords}
+          locale={locale}
+          openGraph={{
+            images: [{ alt: `${page.title} preview`, url: page.image }],
+            title: `${page.title} Example`,
+            type: "website",
+            url: page.canonical,
+          }}
+          siteName="React Helmet Pro"
+          title={`${page.title} Example`}
+          twitter={{
+            creator: "@reacthelmetpro",
+            images: [page.image],
+          }}
+        />
+      )}
 
       <Helmet
         defaultTitle="React Helmet Pro Playground"
@@ -328,16 +413,6 @@ const ExamplePlayground: React.FC = () => {
         <html data-demo-page={pageKey} />
         <body data-locale={locale} />
         <title>{`${page.title} Example`}</title>
-        <meta name="description" content={page.description} />
-        <meta name="keywords" content={page.keywords.join(", ")} />
-        <meta property="og:title" content={`${page.title} Example`} />
-        <meta property="og:description" content={page.description} />
-        <meta property="og:image" content={page.image} />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${page.title} Example`} />
-        <meta name="twitter:description" content={page.description} />
-        <link rel="canonical" href={page.canonical} />
       </Helmet>
 
       <Helmet
@@ -360,6 +435,8 @@ const ExamplePlayground: React.FC = () => {
       />
 
       <StructuredData json={clientStructuredData} />
+      <BreadcrumbJsonLd items={breadcrumbItems} />
+      <FAQJsonLd entries={faqEntries} />
 
       <div hidden>
         <JsonLdScript id="server-jsonld-preview" data={serverStructuredData} />
@@ -502,7 +579,7 @@ const ExamplePlayground: React.FC = () => {
                   <dt style={{ color: "#93a3c8" }}>Canonical</dt>
                   <dd style={{ margin: 0, wordBreak: "break-word" }}>{page.canonical}</dd>
                   <dt style={{ color: "#93a3c8" }}>Structured data</dt>
-                  <dd style={{ margin: 0 }}>Client + server preview included</dd>
+                  <dd style={{ margin: 0 }}>Client, server, and rich-result preview included</dd>
                 </dl>
               </aside>
             </div>
@@ -585,8 +662,9 @@ const ExamplePlayground: React.FC = () => {
             <article style={cardStyle}>
               <h2 style={{ fontSize: 24, marginTop: 0 }}>JSON-LD helper preview</h2>
               <p style={{ color: "#c6d0ea", lineHeight: 1.7 }}>
-                `StructuredData` mounts the client-managed script tag, while `JsonLdScript` gives
-                you a server-safe component for frameworks like Next.js.
+                `StructuredData`, `BreadcrumbJsonLd`, and `FAQJsonLd` cover client-managed rich
+                results, while `JsonLdScript` gives you a server-safe component for frameworks
+                like Next.js.
               </p>
               <pre style={{ ...preStyle, marginBottom: 16 }}>{prettyJson(clientStructuredData)}</pre>
               <pre style={preStyle}>{safeJsonLdStringify(serverStructuredData)}</pre>
