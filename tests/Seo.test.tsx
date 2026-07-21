@@ -23,6 +23,7 @@ describe("Seo", () => {
           keywords={["react", "seo", "helmet"]}
           locale="en-US"
           openGraph={{
+            alternateLocale: ["de-DE"],
             images: [
               {
                 alt: "Open Graph preview",
@@ -71,6 +72,10 @@ describe("Seo", () => {
       "content",
       "React Helmet Pro",
     );
+    expect(document.querySelector('meta[property="og:locale:alternate"]')).toHaveAttribute(
+      "content",
+      "de-DE",
+    );
     expect(document.querySelector('meta[property="og:image:alt"]')).toHaveAttribute(
       "content",
       "Open Graph preview",
@@ -104,6 +109,10 @@ describe("Seo", () => {
               index: true,
               maxSnippet: -1,
             },
+            googleBotNews: {
+              index: false,
+              indexIfEmbedded: true,
+            },
             index: false,
             maxImagePreview: "large",
             noarchive: true,
@@ -131,6 +140,10 @@ describe("Seo", () => {
       "content",
       "index, follow, max-snippet:-1",
     );
+    expect(document.querySelector('meta[name="googlebot-news"]')).toHaveAttribute(
+      "content",
+      "noindex, indexifembedded",
+    );
     expect(document.querySelector('link[rel="alternate"][hreflang="de"]')).toHaveAttribute(
       "href",
       "https://example.com/de/docs",
@@ -147,6 +160,24 @@ describe("Seo", () => {
       "content",
       "custom-token",
     );
+  });
+
+  it("supports title defaults, templates, and priority SSR configuration", async () => {
+    render(
+      <HelmetProvider>
+        <Seo
+          defaultTitle="Example"
+          description="Templated page"
+          prioritizeSeoTags
+          title="Docs"
+          titleTemplate="%s | Example"
+        />
+      </HelmetProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.title).toBe("Docs | Example");
+    });
   });
 
   it("renders article metadata and JSON-LD scripts", async () => {
