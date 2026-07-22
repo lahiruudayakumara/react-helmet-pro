@@ -29,6 +29,11 @@ jobs:
         with:
           version: 10.28.0
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
