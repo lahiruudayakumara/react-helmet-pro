@@ -10,6 +10,7 @@
     "test": "pnpm exec vitest run --pool=forks --poolOptions.forks.singleFork=true",
     "test:watch": "vitest --pool=forks --poolOptions.forks.singleFork=true --max-old-space-size=4096",
     "lint": "eslint . --ext .ts,.tsx",
+    "package:verify": "tsc && node ./scripts/verify-package.mjs",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
