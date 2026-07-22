@@ -19,8 +19,8 @@ authentication and disallow tokens, then revoke the former `NPM_TOKEN`.
 The release workflow requires Node.js 24 and npm 12.0.1 or newer. It verifies
 that the pushed tag is exactly `v<package.json version>`, resolves to the
 workflow commit, and is reachable from `main`. It then builds, packs, inspects,
-and installs the exact tarball before publishing that same file. npm records an
-OIDC-backed provenance attestation in the public transparency log.
+installs, and imports the exact tarball before publishing that same file. npm
+records an OIDC-backed provenance attestation in the public transparency log.
 
 Consumers can verify registry signatures and provenance attestations in an
 installed project with:
