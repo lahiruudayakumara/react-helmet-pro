@@ -16,6 +16,7 @@ export * from './hooks/useHelmetMiddleware';
 export * from './context/HelmetProvider';
 export * from './core/HelmetData';
 export * from './core/SSRUtils';
+export * from './core/auditHelmetState';
 export * from './middlewares/appendSiteName';
 export * from './middlewares/injectLocale';
 export * from './utils/mergeHelmet';
