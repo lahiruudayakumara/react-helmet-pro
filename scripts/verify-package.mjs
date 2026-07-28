@@ -88,6 +88,16 @@ try {
     }
   }
 
+  execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '--eval',
+      "const packageModule = await import('react-helmet-pro'); if (!packageModule.Helmet) throw new Error('Helmet export is missing');",
+    ],
+    { cwd: fixtureDirectory, stdio: 'inherit' },
+  );
+
   const artifactDirectory = join(projectRoot, '.artifacts');
   const repositoryTarball = join(artifactDirectory, basename(tarballPath));
   mkdirSync(artifactDirectory, { recursive: true });
