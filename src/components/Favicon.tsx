@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { isSafeSeoUrl } from "../core/auditHelmetState";
+
 interface FaviconProps {
   href: string;
   type?: string;
@@ -10,6 +12,10 @@ interface FaviconProps {
 
 export const Favicon = ({ href, type, sizes }: FaviconProps) => {
   useEffect(() => {
+    if (!isSafeSeoUrl(href)) {
+      return;
+    }
+
     const existingIcons = document.querySelectorAll("link[rel='icon']");
     existingIcons.forEach((icon) => document.head.removeChild(icon));
 

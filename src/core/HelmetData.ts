@@ -1,7 +1,7 @@
 import { HelmetDispatcher } from "./HelmetDispatcher";
 import { getCanUseDOM } from "./runtime";
 
-import type { HelmetServerContext } from "../types";
+import type { HelmetServerContext, HelmetState } from "../types";
 
 export class HelmetData {
   context: HelmetServerContext;
@@ -13,5 +13,9 @@ export class HelmetData {
       context,
       manageDom: getCanUseDOM(),
     });
+  }
+
+  getState(): HelmetState {
+    return this.dispatcher.getState();
   }
 }

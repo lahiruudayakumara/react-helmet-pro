@@ -2,6 +2,7 @@
 
 import React from "react";
 
+import { isSafeSeoUrl } from "../core/auditHelmetState";
 import { safeJsonLdStringify } from "../next";
 import type { HelmetAttributes, LinkTag, MetaTag, ScriptTag } from "../types";
 import { Helmet } from "./Helmet";
@@ -202,6 +203,63 @@ const buildJsonLdScripts = (value?: object | object[]): ScriptTag[] => {
   }));
 };
 
+const URL_META_FIELDS = new Set([
+  "contenturl",
+  "embedurl",
+  "image",
+  "og:audio",
+  "og:audio:secure_url",
+  "og:audio:url",
+  "og:image",
+  "og:image:secure_url",
+  "og:image:url",
+  "og:url",
+  "og:video",
+  "og:video:secure_url",
+  "og:video:url",
+  "thumbnailurl",
+  "twitter:image",
+  "twitter:image:src",
+  "twitter:player",
+  "twitter:player:stream",
+  "twitter:url",
+  "url",
+]);
+
+const isSafeSeoLink = (tag: LinkTag) => {
+  if (typeof tag.href !== "string") {
+    return true;
+  }
+
+  return isSafeSeoUrl(tag.href, {
+    requireAbsolute: String(tag.rel ?? "").toLowerCase() === "canonical",
+  });
+};
+
+const isSafeSeoMeta = (tag: MetaTag) => {
+  if (typeof tag.content !== "string") {
+    return true;
+  }
+
+  if (
+    typeof tag.httpEquiv === "string" &&
+    tag.httpEquiv.toLowerCase() === "refresh"
+  ) {
+    const refreshUrl = tag.content.match(/(?:^|;)\s*url\s*=\s*(.*?)\s*$/i)?.[1];
+    return refreshUrl === undefined || isSafeSeoUrl(refreshUrl.replace(/^(['"])(.*)\1$/, "$2"));
+  }
+
+  const field = String(tag.property ?? tag.name ?? tag.itemProp ?? "").toLowerCase();
+  if (!URL_META_FIELDS.has(field)) {
+    return true;
+  }
+
+  return isSafeSeoUrl(tag.content, {
+    requireAbsolute: field === "og:url" || field === "twitter:url",
+    requireHttps: field.endsWith(":secure_url"),
+  });
+};
+
 export const Seo = ({
   alternates,
   author,
@@ -332,8 +390,8 @@ export const Seo = ({
     <Helmet
       defaultTitle={defaultTitle}
       htmlAttributes={resolvedHtmlAttributes}
-      link={link}
-      meta={meta}
+      link={link.filter(isSafeSeoLink)}
+      meta={meta.filter(isSafeSeoMeta)}
       prioritizeSeoTags={prioritizeSeoTags}
       script={buildJsonLdScripts(jsonLd)}
       title={title}

@@ -31,6 +31,7 @@
 - Google Analytics integration
 - Favicons & SEO helpers
 - Security meta tags (CSP, nosniff, etc.)
+- Deterministic URL and descriptor security diagnostics with stable rule IDs
 - SSR-friendly with `collectHelmetTags()`
 - Middleware support for reusable helmet logic
 - Context API for global helmet state
@@ -143,6 +144,90 @@ import { Seo } from 'react-helmet-pro';
   }}
 />
 ```
+
+### Validate URL-Bearing Head Descriptors
+
+`auditHelmetState()` is an opt-in, deterministic audit for URL schemes and
+arbitrary attribute names. It accepts the same reduced `HelmetState` on the
+client and server, performs no network requests, and returns diagnostics grouped
+by severity. It does not log automatically in development or production; calling
+the audit API is the explicit opt-in.
+
+```tsx
+import {
+  HELMET_SECURITY_RULE_IDS,
+  auditHelmetState,
+  useHelmet,
+} from 'react-helmet-pro';
+
+function HeadDiagnostics() {
+  const state = useHelmet();
+  const result = auditHelmetState(state, {
+    context: 'raw',
+    suppressions: [
+      // Suppress one known, intentional hint rather than the whole rule.
+      {
+        ruleId: HELMET_SECURITY_RULE_IDS.PROTOCOL_RELATIVE_URL,
+        tagName: 'link',
+        tagIndex: 0,
+        attribute: 'href',
+      },
+    ],
+    severities: {
+      [HELMET_SECURITY_RULE_IDS.DATA_URL]: 'suggestion',
+    },
+  });
+
+  return result.valid
+    ? null
+    : <pre>{JSON.stringify(result.diagnostics, null, 2)}</pre>;
+}
+```
+
+Use `onChangeClientState` to audit each committed client state. For request-local
+SSR, read the un-serialized state from `HelmetData`:
+
+```tsx
+import { renderToString } from 'react-dom/server';
+import { Helmet, HelmetData, auditHelmetState } from 'react-helmet-pro';
+
+const helmetData = new HelmetData({});
+
+renderToString(
+  <Helmet helmetData={helmetData}>
+    <link rel="canonical" href="https://example.com/docs" />
+  </Helmet>
+);
+
+const audit = auditHelmetState(helmetData.getState(), { context: 'seo' });
+```
+
+The security rule IDs are stable public constants:
+
+| Rule ID | Meaning |
+|---------|---------|
+| `RHP_SECURITY_DANGEROUS_URL_SCHEME` | Obfuscated or direct `javascript:` / `vbscript:` URL |
+| `RHP_SECURITY_DATA_URL` | Context-sensitive `data:` URL |
+| `RHP_SECURITY_BLOB_URL` | Context-sensitive `blob:` URL |
+| `RHP_SECURITY_PROTOCOL_RELATIVE_URL` | URL beginning with `//` |
+| `RHP_SECURITY_CUSTOM_URL_SCHEME` | Application-specific or unknown scheme |
+| `RHP_SECURITY_UNEXPECTED_URL_SCHEME` | Malformed, disallowed, or contextually ineffective scheme |
+| `RHP_SECURITY_EVENT_HANDLER_ATTRIBUTE` | String `on*` event-handler attribute |
+| `RHP_SECURITY_SUSPICIOUS_ATTRIBUTE_NAME` | Invalid or prototype-sensitive attribute name |
+
+The high-level `<Seo />` and `<Favicon />` helpers omit unsafe schemes from
+canonical, alternate, Open Graph, Twitter, refresh, resource, and image URLs.
+Canonical and Open Graph page URLs must be absolute HTTP(S) URLs, while safe
+relative resource and image URLs remain supported. The low-level `<Helmet />`
+API deliberately retains raw descriptors for integrations that need them.
+
+#### Validation Is Not Sanitization
+
+The audit API reports policy violations; it never rewrites, escapes, or makes
+untrusted input safe. `<Seo />` applies conservative URL defaults, but raw
+`<Helmet />` values are still rendered using the existing serialization rules.
+Audit results do not replace input validation, a Content Security Policy, trusted
+URL construction, or safe handling of inline script and JSON-LD content.
 
 ### Add Homepage SEO With Site Identity Markup
 
