@@ -145,16 +145,13 @@ import { Seo } from 'react-helmet-pro';
 />
 ```
 
-### Validate URL-Bearing Head Descriptors
+### Validate Head Descriptors & SEO Audit API
 
-`auditHelmetState()` is an opt-in, deterministic audit for URL schemes and
-arbitrary attribute names. It accepts the same reduced `HelmetState` on the
-client and server, performs no network requests, and returns diagnostics grouped
-by severity. It does not log automatically in development or production; calling
-the audit API is the explicit opt-in.
+`auditHelmetState()` is an opt-in, deterministic audit for invalid, conflicting, incomplete, or ineffective SEO metadata, Open Graph alignment, Twitter cards, robots directives, hreflang tags, image metadata, dates, structured data (JSON-LD), and URL security schemes. It accepts the reduced `HelmetState` on the client and server, performs no network requests, and returns diagnostics grouped by severity (`error`, `warning`, `suggestion`).
 
 ```tsx
 import {
+  HELMET_SEO_RULE_IDS,
   HELMET_SECURITY_RULE_IDS,
   auditHelmetState,
   useHelmet,
@@ -163,18 +160,15 @@ import {
 function HeadDiagnostics() {
   const state = useHelmet();
   const result = auditHelmetState(state, {
-    context: 'raw',
+    context: 'seo',
     suppressions: [
-      // Suppress one known, intentional hint rather than the whole rule.
       {
-        ruleId: HELMET_SECURITY_RULE_IDS.PROTOCOL_RELATIVE_URL,
-        tagName: 'link',
-        tagIndex: 0,
-        attribute: 'href',
+        ruleId: HELMET_SEO_RULE_IDS.DESCRIPTION_TOO_SHORT,
+        tagName: 'meta',
       },
     ],
     severities: {
-      [HELMET_SECURITY_RULE_IDS.DATA_URL]: 'suggestion',
+      [HELMET_SEO_RULE_IDS.TITLE_TOO_LONG]: 'warning',
     },
   });
 
@@ -202,8 +196,21 @@ renderToString(
 const audit = auditHelmetState(helmetData.getState(), { context: 'seo' });
 ```
 
-The security rule IDs are stable public constants:
+#### Development Mode Warnings
 
+Enable `enableDevDiagnostics` on `<HelmetProvider>` to log development warnings to the console automatically when head state updates:
+
+```tsx
+<HelmetProvider enableDevDiagnostics>
+  <App />
+</HelmetProvider>
+```
+
+#### Stable Diagnostic Rule IDs
+
+Both security and SEO rule IDs are exported as stable public constants:
+
+##### Security Rule IDs (`HELMET_SECURITY_RULE_IDS`)
 | Rule ID | Meaning |
 |---------|---------|
 | `RHP_SECURITY_DANGEROUS_URL_SCHEME` | Obfuscated or direct `javascript:` / `vbscript:` URL |
@@ -214,6 +221,45 @@ The security rule IDs are stable public constants:
 | `RHP_SECURITY_UNEXPECTED_URL_SCHEME` | Malformed, disallowed, or contextually ineffective scheme |
 | `RHP_SECURITY_EVENT_HANDLER_ATTRIBUTE` | String `on*` event-handler attribute |
 | `RHP_SECURITY_SUSPICIOUS_ATTRIBUTE_NAME` | Invalid or prototype-sensitive attribute name |
+
+##### SEO Rule IDs (`HELMET_SEO_RULE_IDS`)
+| Category | Rule ID | Meaning |
+|----------|---------|---------|
+| Title & Base | `RHP_SEO_TITLE_MISSING` | Page title tag is missing |
+| | `RHP_SEO_TITLE_EMPTY` | Page title tag is empty |
+| | `RHP_SEO_TITLE_TOO_SHORT` | Title length is under recommended minimum (<10 chars) |
+| | `RHP_SEO_TITLE_TOO_LONG` | Title length is over recommended maximum (>60 chars) |
+| | `RHP_SEO_TITLE_DUPLICATE` | Multiple title tags or attributes detected |
+| | `RHP_SEO_BASE_MULTIPLE` | Multiple `<base>` tags detected |
+| Description | `RHP_SEO_DESCRIPTION_MISSING` | Meta description tag is missing |
+| | `RHP_SEO_DESCRIPTION_EMPTY` | Meta description tag is empty |
+| | `RHP_SEO_DESCRIPTION_TOO_SHORT` | Description length is under recommended minimum (<50 chars) |
+| | `RHP_SEO_DESCRIPTION_TOO_LONG` | Description length is over recommended maximum (>160 chars) |
+| | `RHP_SEO_DESCRIPTION_DUPLICATE` | Multiple meta description tags detected |
+| Canonical | `RHP_SEO_CANONICAL_MISSING` | Canonical link tag is missing |
+| | `RHP_SEO_CANONICAL_INVALID_URL` | Canonical URL is relative or malformed |
+| | `RHP_SEO_CANONICAL_DUPLICATE` | Multiple canonical link tags detected |
+| Robots | `RHP_SEO_ROBOTS_CONFLICT` | Conflicting robots directives (e.g. `index, noindex`) |
+| | `RHP_SEO_ROBOTS_DUPLICATE` | Multiple robots meta tags detected |
+| | `RHP_SEO_NOINDEX_CANONICAL_CONFLICT` | Page specifies `noindex` alongside a canonical target |
+| Open Graph | `RHP_SEO_OG_INCOMPLETE` | Missing recommended OG fields (`og:title`, `og:image`, etc.) |
+| | `RHP_SEO_OG_DUPLICATE` | Multiple definitions for single-value OG property |
+| | `RHP_SEO_OG_CANONICAL_MISMATCH` | `og:url` does not match canonical link URL |
+| Twitter | `RHP_SEO_TWITTER_INCOMPLETE` | Missing required Twitter card fields |
+| | `RHP_SEO_TWITTER_DUPLICATE` | Multiple definitions for single-value Twitter property |
+| Hreflang | `RHP_SEO_HREFLANG_INVALID_CODE` | Invalid BCP 47 language tag |
+| | `RHP_SEO_HREFLANG_INVALID_URL` | Hreflang href is relative or malformed |
+| | `RHP_SEO_HREFLANG_DUPLICATE` | Duplicate hreflang tags for same language |
+| | `RHP_SEO_HREFLANG_MISSING_X_DEFAULT` | Multiple hreflangs present without `x-default` fallback |
+| Image | `RHP_SEO_IMAGE_ALT_MISSING` | `og:image` present without `og:image:alt` |
+| | `RHP_SEO_IMAGE_INVALID_DIMENSIONS` | Invalid `og:image:width` or `og:image:height` value |
+| | `RHP_SEO_IMAGE_URL_INVALID` | Image URL is invalid or relative |
+| Dates | `RHP_SEO_DATE_INVALID` | Invalid ISO 8601 date string format |
+| | `RHP_SEO_DATE_FUTURE` | Published date is set in the future |
+| | `RHP_SEO_DATE_ORDER_INVALID` | Modified date is earlier than published date |
+| JSON-LD | `RHP_SEO_JSONLD_INVALID` | Invalid JSON syntax in `<script type="application/ld+json">` |
+| | `RHP_SEO_JSONLD_MISSING_CONTEXT` | JSON-LD schema missing `@context` (schema.org) |
+| | `RHP_SEO_JSONLD_MISSING_TYPE` | JSON-LD schema missing `@type` declaration |
 
 The high-level `<Seo />` and `<Favicon />` helpers omit unsafe schemes from
 canonical, alternate, Open Graph, Twitter, refresh, resource, and image URLs.

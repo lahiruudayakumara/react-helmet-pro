@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import type { AuditHelmetStateOptions } from "./diagnostics";
 
 export type HelmetAttributeValue = string | number | boolean | null | undefined;
 export type HelmetAttributes = Record<string, HelmetAttributeValue>;
@@ -121,8 +122,10 @@ export interface HelmetProps {
 }
 
 export interface HelmetProviderProps {
+  auditOptions?: AuditHelmetStateOptions;
   children: ReactNode;
   context?: HelmetServerContext;
+  enableDevDiagnostics?: boolean;
 }
 
 export interface HelmetContextValue extends HelmetState {
