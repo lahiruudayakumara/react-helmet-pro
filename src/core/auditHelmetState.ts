@@ -1554,7 +1554,7 @@ export const auditHelmetState = (
 
   // Security diagnostics
   auditSecurityDescriptors(state, options, diagnostics);
-
+  
   // SEO diagnostics
   auditTitleAndBase(state, options, diagnostics);
   auditDescription(state, options, diagnostics);
