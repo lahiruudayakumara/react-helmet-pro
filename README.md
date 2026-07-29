@@ -376,6 +376,90 @@ function MultiLingualProductPage() {
 }
 ```
 
+---
+
+### Expanded Google Search Structured Data (JSON-LD)
+
+Framework-agnostic pure schema builders and type-safe React components for major Google Search rich features.
+
+> [!NOTE]
+> **Eligibility Disclaimer**:
+> Adding structured data enhances eligibility for Google search rich features, but rich result display is subject to Google's search algorithms and site quality guidelines.
+
+#### React JSON-LD Component Helpers
+
+```tsx
+import {
+  ProductJsonLd,
+  JobPostingJsonLd,
+  EventJsonLd,
+  LocalBusinessJsonLd,
+  RecipeJsonLd,
+} from 'react-helmet-pro';
+
+// 1. E-Commerce Product with Offers, Merchant Return Policy & Shipping Details
+<ProductJsonLd
+  product={{
+    name: 'Pro Audio Headphones',
+    description: 'Noise cancelling studio headphones.',
+    brand: 'Acme Sound',
+    sku: 'ACME-HEADPHONE-01',
+    offers: {
+      price: 199.99,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      hasMerchantReturnPolicy: {
+        merchantReturnDays: 30,
+        returnFees: 'https://schema.org/FreeReturn',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      },
+      shippingDetails: {
+        shippingDestination: { addressCountry: 'US' },
+        shippingRate: { currency: 'USD', value: 0 },
+      },
+    },
+  }}
+/>
+
+// 2. Job Posting
+<JobPostingJsonLd
+  jobPosting={{
+    title: 'Senior Frontend Engineer',
+    description: 'We are hiring a React and Next.js specialist.',
+    datePosted: '2026-07-29',
+    hiringOrganization: { name: 'Acme Inc', logo: 'https://example.com/logo.png' },
+    jobLocation: { addressLocality: 'San Francisco', addressCountry: 'US' },
+  }}
+/>
+```
+
+#### Pure Framework-Independent Builders
+
+```tsx
+import {
+  buildProductSchema,
+  buildJobPostingSchema,
+  buildEventSchema,
+  buildRecipeSchema,
+  buildLocalBusinessSchema,
+} from 'react-helmet-pro';
+
+// Pure JavaScript objects suitable for Next.js Metadata API, Remix, Svelte, or Node backends
+const productJson = buildProductSchema({
+  name: 'Studio Monitor',
+  offers: { price: 299.99, priceCurrency: 'USD' },
+});
+```
+
+#### Supported Schema Catalog & References
+
+| Category | Supported Schemas & Components | Specification References |
+|---|---|---|
+| **E-Commerce** | `ProductJsonLd`, `ProductGroupJsonLd`, `Offer`, `MerchantReturnPolicy`, `OfferShippingDetails` | [Google Product Snippets](https://developers.google.com/search/docs/appearance/structured-data/product-information) \| [Schema.org Product](https://schema.org/Product) |
+| **Business & Employment** | `LocalBusinessJsonLd`, `JobPostingJsonLd` | [Google Job Posting](https://developers.google.com/search/docs/appearance/structured-data/job-posting) \| [Schema.org LocalBusiness](https://schema.org/LocalBusiness) |
+| **Events & Media** | `EventJsonLd`, `RecipeJsonLd`, `VideoObjectJsonLd`, `SoftwareApplicationJsonLd` | [Google Events](https://developers.google.com/search/docs/appearance/structured-data/event) \| [Schema.org Event](https://schema.org/Event) |
+| **Community & Data** | `ProfilePageJsonLd`, `DiscussionForumPostingJsonLd`, `CourseJsonLd`, `DatasetJsonLd` | [Google Profile Page](https://developers.google.com/search/docs/appearance/structured-data/profile-page) \| [Schema.org Dataset](https://schema.org/Dataset) |
+
 
 
 ### Add Title and Meta Tags
