@@ -11,6 +11,7 @@ const isDescriptorEmpty = (descriptor: HelmetDescriptor) =>
   !descriptor.title &&
   !descriptor.defaultTitle &&
   !descriptor.titleTemplate &&
+  !descriptor.nonce &&
   !descriptor.base.length &&
   !descriptor.meta.length &&
   !descriptor.link.length &&

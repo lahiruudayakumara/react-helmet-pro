@@ -623,10 +623,83 @@ const key = getTagIdentityKey('meta', { property: 'og:image', content: 'https://
 // "meta:property:og:image:https://example.com/cover-1.jpg"
 ```
 
-#### React 18/19 Strict Mode & Suspense Resilience
-- **Strict Mode Idempotency**: Component double rendering in `React.StrictMode` produces zero duplicate tags or memory leaks.
-- **Suspense & Async Loading**: Unmounted lazy components clean up their head tags automatically, restoring parent or fallback metadata deterministically.
-- **100% Request Isolation**: Server-side rendering (`HelmetData({ context })`) maintains complete request isolation across concurrent Node.js SSR requests without global mutable state.
+---
+
+### CSP Nonces, Secure Tag Placement, and Performance Resource Hints
+
+Request-scoped Content Security Policy (CSP) nonce propagation, body tag placement collections (`bodyOpen`, `bodyClose`), typed resource hint components (`<Preload />`, `<Preconnect />`, `<DnsPrefetch />`), and Subresource Integrity (SRI) validation.
+
+#### 1. Request-Scoped CSP Nonce Propagation
+
+```tsx
+import { HelmetProvider, Helmet } from 'react-helmet-pro';
+
+// 1. Pass request-scoped nonce to HelmetProvider
+<HelmetProvider nonce={req.cspNonce}>
+  <App />
+</HelmetProvider>
+
+// All inline <script>, <style>, and JSON-LD scripts automatically inherit nonce="rAnd0mN0nc3"!
+```
+
+#### 2. Secure Tag Placement (`bodyOpen` and `bodyClose` SSR Extraction)
+
+```tsx
+<Helmet>
+  {/* Injected into <head> */}
+  <script src="/head-script.js" />
+
+  {/* Injected at top of <body> */}
+  <script tagPosition="bodyOpen" dangerouslySetInnerHTML={{ __html: 'console.log("Top of body")' }} />
+
+  {/* Injected at bottom of <body> right before </body> */}
+  <script tagPosition="bodyClose" src="/analytics-bottom.js" />
+</Helmet>
+```
+
+In Server-Side Rendering (Node.js / Next.js / Remix):
+```tsx
+const context = {};
+const appHtml = renderToString(<HelmetProvider context={context}><App /></HelmetProvider>);
+const { helmet } = context;
+
+// Access bodyOpen and bodyClose collections cleanly:
+const bodyOpenHtml = helmet.bodyOpenScripts.toString();
+const bodyCloseHtml = helmet.bodyCloseScripts.toString();
+```
+
+#### 3. Typed Performance Resource Hint Components
+
+```tsx
+import { Preload, ModulePreload, Preconnect, DnsPrefetch, Prefetch } from 'react-helmet-pro';
+
+// Preload fonts, scripts, and responsive hero images
+<Preload
+  href="/fonts/inter.woff2"
+  as="font"
+  type="font/woff2"
+  crossOrigin="anonymous"
+/>
+
+<Preload
+  href="/hero.jpg"
+  as="image"
+  imageSrcSet="/hero-400.jpg 400w, /hero-800.jpg 800w"
+  imageSizes="100vw"
+  fetchPriority="high"
+/>
+
+// Preconnect to CDNs & API origins
+<Preconnect href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+<DnsPrefetch href="https://cdn.example.com" />
+<Prefetch href="/next-page" />
+```
+
+#### Threat Model & Security Diagnostics
+- **SRI Enforcement**: Triggers `RHP_SECURITY_MISSING_SRI` suggestions for cross-origin scripts/stylesheets lacking `integrity` hashes.
+- **Duplicate Hint Detection**: Triggers `RHP_SECURITY_DUPLICATE_RESOURCE_HINT` warnings when duplicate `preconnect` or `dns-prefetch` directives target the same origin.
+- **Strict Scheme Validation**: Catches malicious `javascript:` or unexpected protocol schemes.
+
 
 
 

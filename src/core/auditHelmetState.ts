@@ -1415,12 +1415,12 @@ const auditJsonLd = (
  * or sanitizes descriptors, so the same function can be used for client and SSR
  * state without network requests.
  */
-export const auditHelmetState = (
+const auditSecurityDescriptors = (
   state: HelmetState,
-  options: AuditHelmetStateOptions = {},
-): HelmetAuditResult => {
+  options: AuditHelmetStateOptions,
+  diagnostics: HelmetDiagnostic[],
+) => {
   const context = options.context ?? "raw";
-  const diagnostics: HelmetDiagnostic[] = [];
 
   // Security diagnostics
   collectUrlLocations(state).forEach((location) => {
@@ -1475,6 +1475,86 @@ export const auditHelmetState = (
       );
     }
   });
+};
+
+const auditResourceHintsAndSecurity = (
+  state: HelmetState,
+  options: AuditHelmetStateOptions,
+  diagnostics: HelmetDiagnostic[],
+) => {
+  const seenHints = new Set<string>();
+
+  state.link.forEach((tag, index) => {
+    if (tag.rel === "preconnect" || tag.rel === "dns-prefetch") {
+      const key = `${tag.rel}:${tag.href}`;
+      if (seenHints.has(key)) {
+        addDiagnostic(
+          diagnostics,
+          {
+            id: HELMET_SECURITY_RULE_IDS.DUPLICATE_RESOURCE_HINT,
+            message: `Duplicate ${tag.rel} link hint for target URL "${tag.href}".`,
+            source: createSource("link", tag, "href", index),
+            value: tag.href,
+          },
+          "warning",
+          options,
+        );
+      } else {
+        seenHints.add(key);
+      }
+    }
+
+    if (
+      tag.rel === "stylesheet" &&
+      typeof tag.href === "string" &&
+      tag.href.startsWith("http") &&
+      tag.crossOrigin &&
+      !tag.integrity
+    ) {
+      addDiagnostic(
+        diagnostics,
+        {
+          id: HELMET_SECURITY_RULE_IDS.MISSING_SRI,
+          message: `Cross-origin stylesheet "${tag.href}" is missing Subresource Integrity (integrity) attribute.`,
+          source: createSource("link", tag, "href", index),
+          value: tag.href,
+        },
+        "suggestion",
+        options,
+      );
+    }
+  });
+
+  state.script.forEach((tag, index) => {
+    if (
+      typeof tag.src === "string" &&
+      tag.src.startsWith("http") &&
+      tag.crossOrigin &&
+      !tag.integrity
+    ) {
+      addDiagnostic(
+        diagnostics,
+        {
+          id: HELMET_SECURITY_RULE_IDS.MISSING_SRI,
+          message: `Cross-origin script "${tag.src}" is missing Subresource Integrity (integrity) attribute.`,
+          source: createSource("script", tag, "src", index),
+          value: tag.src,
+        },
+        "suggestion",
+        options,
+      );
+    }
+  });
+};
+
+export const auditHelmetState = (
+  state: HelmetState,
+  options: AuditHelmetStateOptions = {},
+): HelmetAuditResult => {
+  const diagnostics: HelmetDiagnostic[] = [];
+
+  // Security diagnostics
+  auditSecurityDescriptors(state, options, diagnostics);
 
   // SEO diagnostics
   auditTitleAndBase(state, options, diagnostics);
@@ -1487,6 +1567,7 @@ export const auditHelmetState = (
   auditImageMetadata(state, options, diagnostics);
   auditDates(state, options, diagnostics);
   auditJsonLd(state, options, diagnostics);
+  auditResourceHintsAndSecurity(state, options, diagnostics);
 
   const errors = diagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
