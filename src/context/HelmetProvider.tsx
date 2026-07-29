@@ -12,14 +12,21 @@ type HelmetProviderComponent = React.FC<HelmetProviderProps> & {
   canUseDOM: boolean;
 };
 
-const HelmetProviderBase: React.FC<HelmetProviderProps> = ({ children, context }) => {
+const HelmetProviderBase: React.FC<HelmetProviderProps> = ({
+  auditOptions,
+  children,
+  context,
+  enableDevDiagnostics,
+}) => {
   const dispatcher = useMemo(
     () =>
       new HelmetDispatcher({
+        auditOptions,
         context,
+        enableDevDiagnostics,
         manageDom: getCanUseDOM(),
       }),
-    [context],
+    [auditOptions, context, enableDevDiagnostics],
   );
   const [state, setState] = useState(() => dispatcher.getState());
 

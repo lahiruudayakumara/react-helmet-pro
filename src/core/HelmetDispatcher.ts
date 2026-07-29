@@ -1,8 +1,9 @@
+import { auditHelmetState } from "./auditHelmetState";
 import { syncHelmetState } from "./HelmetManager";
 import { buildServerState, createEmptyState, normalizeHelmetProps, reduceHelmetInstances } from "./helmetState";
 import { getCanUseDOM } from "./runtime";
 
-import type { HelmetDescriptor, HelmetInstance, HelmetProps, HelmetServerContext, HelmetServerState, HelmetState } from "../types";
+import type { AuditHelmetStateOptions, HelmetDescriptor, HelmetInstance, HelmetProps, HelmetServerContext, HelmetServerState, HelmetState } from "../types";
 
 const MANUAL_INSTANCE_ID = "__react_helmet_pro_manual__";
 
@@ -52,7 +53,9 @@ export class HelmetDispatcher {
 
   constructor(
     private readonly options: {
+      auditOptions?: AuditHelmetStateOptions;
       context?: HelmetServerContext;
+      enableDevDiagnostics?: boolean;
       manageDom?: boolean;
     } = {},
   ) {
@@ -168,6 +171,17 @@ export class HelmetDispatcher {
     }
 
     if (stateChanged) {
+      if (
+        this.options.enableDevDiagnostics ||
+        this.options.auditOptions?.enableDevDiagnostics
+      ) {
+        auditHelmetState(this.currentState, {
+          context: "seo",
+          enableDevDiagnostics: true,
+          ...this.options.auditOptions,
+        });
+      }
+
       this.scheduleDomCommit();
       this.notifyListeners();
     }
