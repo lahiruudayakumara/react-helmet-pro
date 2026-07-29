@@ -703,8 +703,118 @@ import { Preload, ModulePreload, Preconnect, DnsPrefetch, Prefetch } from 'react
 
 
 
+---
 
+### Next.js App Router Integration (`react-helmet-pro/next`)
 
+A zero-runtime-dependency, version-aware Next.js App Router integration. All utilities work as pure functions importable in Next.js 13, 14, 15 and non-Next.js environments alike.
+
+#### Metadata Mapping Table
+
+| `react-helmet-pro` | Next.js `Metadata` |
+|---|---|
+| `title` | `metadata.title` (string or `{ default, absolute, template }`) |
+| `link rel="canonical"` | `metadata.alternates.canonical` |
+| `link rel="alternate" hreflang="..."` | `metadata.alternates.languages` |
+| `meta name="description"` | `metadata.description` |
+| `meta property="og:title"` | `metadata.openGraph.title` |
+| `meta property="og:description"` | `metadata.openGraph.description` |
+| `meta property="og:image"` | `metadata.openGraph.images[]` |
+| `meta property="og:url"` | `metadata.openGraph.url` |
+| `meta name="twitter:card"` | `metadata.twitter.card` |
+| `meta name="robots"` | `metadata.robots` |
+| `meta name="google-site-verification"` | `metadata.verification.google` |
+| JSON-LD `<script type="application/ld+json">` | `<ServerJsonLd schema={...} />` (RSC) |
+
+#### 1. Bidirectional Conversion
+
+```tsx
+import { helmetToNextMetadata, nextMetadataToHelmet } from 'react-helmet-pro/next';
+
+// Helmet → Next.js (for App Router generateMetadata)
+const helmProps = {
+  title: 'Product Title',
+  meta: [{ name: 'description', content: 'Great product' }],
+  link: [{ rel: 'canonical', href: 'https://acme.com/products/widget' }],
+};
+const metadata = helmetToNextMetadata(helmProps);
+// { title: 'Product Title', description: 'Great product', alternates: { canonical: 'https://acme.com/products/widget' } }
+
+// Next.js → Helmet (for hybrid Pages Router / Client components)
+const backToHelmet = nextMetadataToHelmet(metadata);
+```
+
+#### 2. `createGenerateMetadata` — App Router `generateMetadata` Helper
+
+```ts
+// app/products/[id]/page.tsx
+import { createGenerateMetadata } from 'react-helmet-pro/next';
+
+export const generateMetadata = createGenerateMetadata(
+  async ({ params }) => ({
+    title: `Product ${params.id}`,
+    description: 'View product details.',
+    alternates: { canonical: `/products/${params.id}` }, // relative URLs auto-resolved
+  }),
+  { siteUrl: 'https://acme.com' }
+);
+```
+
+#### 3. Server Component-safe JSON-LD
+
+```tsx
+// app/products/[id]/page.tsx (React Server Component - no 'use client')
+import { ServerJsonLd } from 'react-helmet-pro/next';
+
+export default async function ProductPage({ params }) {
+  return (
+    <>
+      <ServerJsonLd
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: 'Widget',
+          offers: { '@type': 'Offer', price: '29.99', priceCurrency: 'USD' },
+        }}
+        id="product-schema"
+        nonce={nonce}
+      />
+    </>
+  );
+}
+```
+
+#### 4. File-Based Metadata Routes
+
+```ts
+// app/robots.ts
+import { defineNextRobots } from 'react-helmet-pro/next';
+export const dynamic = 'force-static';
+export default defineNextRobots({
+  rules: [{ userAgent: '*', allow: '/' }, { userAgent: 'Googlebot', disallow: '/private' }],
+  sitemap: 'https://acme.com/sitemap.xml',
+});
+
+// app/sitemap.ts
+import { defineNextSitemap } from 'react-helmet-pro/next';
+export default defineNextSitemap(async () => {
+  const pages = await fetchPages();
+  return pages.map((p) => ({ url: p.url, lastModified: p.updatedAt, priority: 0.8 }));
+});
+
+// app/manifest.ts
+import { defineNextManifest } from 'react-helmet-pro/next';
+export default defineNextManifest({ name: 'Acme App', short_name: 'Acme', start_url: '/', display: 'standalone' });
+```
+
+#### Next.js Version Support Policy
+
+| Next.js Version | Supported | Notes |
+|---|---|---|
+| 13 (App Router) | ✅ | `generateMetadata`, RSC, file routes |
+| 14 | ✅ | Full support |
+| 15 | ✅ | Full support, Turbopack compatible |
+| Pages Router (`pages/`) | ✅ | Use `nextMetadataToHelmet` + `<Helmet>` |
 
 ### Add Title and Meta Tags
 
