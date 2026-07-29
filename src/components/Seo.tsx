@@ -67,28 +67,8 @@ export interface SeoVerification {
   yandex?: string;
 }
 
-export interface SeoRobotsRules {
-  follow?: boolean;
-  index?: boolean;
-  /** Only takes effect together with `index: false`. */
-  indexIfEmbedded?: boolean;
-  maxImagePreview?: "large" | "none" | "standard";
-  maxSnippet?: number;
-  maxVideoPreview?: number;
-  noarchive?: boolean;
-  nocache?: boolean;
-  noimageindex?: boolean;
-  nosnippet?: boolean;
-  notranslate?: boolean;
-  unavailableAfter?: string;
-}
-
-export interface SeoRobotsDirectives extends SeoRobotsRules {
-  /** Rules specifically for Google's text search crawler. */
-  googleBot?: SeoRobotsRules;
-  /** Rules specifically for Google News. */
-  googleBotNews?: SeoRobotsRules;
-}
+import type { SeoRobotsDirectives, SeoRobotsRules } from "../types/robots";
+export type { SeoRobotsDirectives, SeoRobotsRules };
 
 export interface SeoProps {
   alternates?: SeoAlternateLink[];
@@ -141,63 +121,7 @@ const appendNameMeta = (list: MetaTag[], name: string, content?: string | number
   });
 };
 
-const buildRobotsContent = (value?: SeoRobotsRules) => {
-  if (!value) {
-    return undefined;
-  }
-
-  const parts: string[] = [];
-
-  if (value.index !== undefined) {
-    parts.push(value.index ? "index" : "noindex");
-  }
-
-  if (value.follow !== undefined) {
-    parts.push(value.follow ? "follow" : "nofollow");
-  }
-
-  if (value.indexIfEmbedded) {
-    parts.push("indexifembedded");
-  }
-
-  if (value.noarchive) {
-    parts.push("noarchive");
-  }
-
-  if (value.nocache) {
-    parts.push("nocache");
-  }
-
-  if (value.noimageindex) {
-    parts.push("noimageindex");
-  }
-
-  if (value.nosnippet) {
-    parts.push("nosnippet");
-  }
-
-  if (value.notranslate) {
-    parts.push("notranslate");
-  }
-
-  if (value.maxImagePreview) {
-    parts.push(`max-image-preview:${value.maxImagePreview}`);
-  }
-
-  if (value.maxSnippet !== undefined) {
-    parts.push(`max-snippet:${value.maxSnippet}`);
-  }
-
-  if (value.maxVideoPreview !== undefined) {
-    parts.push(`max-video-preview:${value.maxVideoPreview}`);
-  }
-
-  if (value.unavailableAfter) {
-    parts.push(`unavailable_after:${value.unavailableAfter}`);
-  }
-
-  return parts.length ? parts.join(", ") : undefined;
-};
+import { buildRobotsString } from "../utils/robotsBuilder";
 
 const buildJsonLdScripts = (value?: object | object[]): ScriptTag[] => {
   if (!value) {
@@ -302,13 +226,17 @@ export const Seo = (rawProps: SeoProps) => {
   appendNameMeta(meta, "keywords", keywords?.join(", "));
   appendNameMeta(meta, "author", author);
 
-  const robotsContent = buildRobotsContent(robots);
-  const googleBotContent = buildRobotsContent(robots?.googleBot);
-  const googleBotNewsContent = buildRobotsContent(robots?.googleBotNews);
+  appendNameMeta(meta, "robots", buildRobotsString(robots));
+  appendNameMeta(meta, "googlebot", buildRobotsString(robots?.googleBot));
+  appendNameMeta(meta, "googlebot-news", buildRobotsString(robots?.googleBotNews));
+  appendNameMeta(meta, "bingbot", buildRobotsString(robots?.bingBot));
+  appendNameMeta(meta, "duckduckbot", buildRobotsString(robots?.duckDuckBot));
 
-  appendNameMeta(meta, "robots", robotsContent);
-  appendNameMeta(meta, "googlebot", googleBotContent);
-  appendNameMeta(meta, "googlebot-news", googleBotNewsContent);
+  if (robots?.customCrawlers) {
+    Object.entries(robots.customCrawlers).forEach(([ua, rules]) => {
+      appendNameMeta(meta, ua.toLowerCase(), buildRobotsString(rules));
+    });
+  }
 
   appendNameMeta(meta, "google-site-verification", verification?.google);
   appendNameMeta(meta, "yandex-verification", verification?.yandex);
