@@ -586,11 +586,48 @@ export const GET = createSitemapRouteHandler([
 // app/robots.txt/route.ts
 import { createRobotsTxtRouteHandler } from 'react-helmet-pro';
 
-export const GET = createRobotsTxtRouteHandler({
-  rules: [{ userAgent: '*', allow: '/' }],
-  sitemaps: ['https://example.com/sitemap.xml'],
-});
+---
+
+### Head Tag Identity Matrix, Concurrency & State Restoration
+
+`react-helmet-pro` uses a deterministic tag identity matrix to decide when head tags overwrite each other versus when multiple declarations coexist.
+
+#### Tag Identity Precedence Matrix
+
+| Tag Type | Identity Discriminator | Behaviour & Multi-Value Policy |
+|---|---|---|
+| **Explicit Key** | `key="custom-id"` | Overrides any tag with matching `key` regardless of attributes |
+| **Single-Instance Meta** | `name="description"`, `name="viewport"`, `property="og:title"` | Single active instance; nested overrides parent |
+| **Repeatable Meta** | `property="og:image"`, `property="article:author"`, `property="og:see_also"` | Multiple distinct values coexist; identical duplicates deduplicated |
+| **Icon Links** | `rel="icon"` + `sizes="32x32"` | Differentiated by size and href; distinct favicon sizes coexist |
+| **Stylesheet & Links** | `rel="stylesheet"`, `rel="canonical"` | Canonical is single instance; stylesheets differentiated by `href` |
+
+#### Explicit Key Overrides & Repeatable Tags
+
+```tsx
+import { Helmet, getTagIdentityKey } from 'react-helmet-pro';
+
+// 1. Explicit Key Override: Overrides theme-color regardless of content
+<Helmet>
+  <meta key="theme" name="theme-color" content="#ffffff" />
+</Helmet>
+
+// 2. Repeatable OG Images: Multiple images coexist for rich social previews
+<Helmet>
+  <meta property="og:image" content="https://example.com/cover-1.jpg" />
+  <meta property="og:image" content="https://example.com/cover-2.jpg" />
+</Helmet>
+
+// Query identity key programmatically
+const key = getTagIdentityKey('meta', { property: 'og:image', content: 'https://example.com/cover-1.jpg' });
+// "meta:property:og:image:https://example.com/cover-1.jpg"
 ```
+
+#### React 18/19 Strict Mode & Suspense Resilience
+- **Strict Mode Idempotency**: Component double rendering in `React.StrictMode` produces zero duplicate tags or memory leaks.
+- **Suspense & Async Loading**: Unmounted lazy components clean up their head tags automatically, restoring parent or fallback metadata deterministically.
+- **100% Request Isolation**: Server-side rendering (`HelmetData({ context })`) maintains complete request isolation across concurrent Node.js SSR requests without global mutable state.
+
 
 
 
