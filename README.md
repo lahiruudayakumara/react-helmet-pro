@@ -291,10 +291,90 @@ URL policies can be set on `<HelmetProvider>` or overridden per-component:
 | `sortQueryParams` | `boolean` | Alphabetically sorts query parameters for deterministic output | `false` |
 | `lowercaseHost` | `boolean` | Lowercases scheme and hostname (supports IDNs/Punycode and custom ports) | `true` |
 
-#### Backward-Compatible Migration & Bundle Impact
+### Advanced Robots Directives & HTTP X-Robots-Tag
 
-- **Migration**: Fully backward compatible. All existing `<HelmetProvider>` and `<Seo>` configurations continue to work without modification.
-- **Bundle Impact**: ~1.2 KB gzipped addition for complete typed defaults resolution, nested context merging, automatic Open Graph / Twitter fallback derivations, and canonical URL normalization policies.
+Fine-grained control over search engine crawlers with typed directives, built-in presets, and shared serialization between HTML `<meta>` tags and SSR `X-Robots-Tag` HTTP response headers.
+
+#### Robots Presets (`ROBOTS_PRESETS`)
+
+```tsx
+import { ROBOTS_PRESETS, Seo } from 'react-helmet-pro';
+
+// Use built-in presets
+<Seo
+  title="User Dashboard"
+  robots={ROBOTS_PRESETS.PRIVATE} // { index: false, follow: false, noarchive: true, nocache: true, nosnippet: true }
+/>
+
+// Available Presets:
+// - ROBOTS_PRESETS.INDEX_FOLLOW: { index: true, follow: true }
+// - ROBOTS_PRESETS.NOINDEX_NOFOLLOW: { index: false, follow: false }
+// - ROBOTS_PRESETS.NOINDEX_FOLLOW: { index: false, follow: true }
+// - ROBOTS_PRESETS.INDEX_NOFOLLOW: { index: true, follow: false }
+// - ROBOTS_PRESETS.PRIVATE: { index: false, follow: false, noarchive: true, nocache: true, nosnippet: true }
+// - ROBOTS_PRESETS.MAXIMAL: { index: true, follow: true, maxImagePreview: "large", maxSnippet: -1, maxVideoPreview: -1 }
+```
+
+#### Crawler-Specific Directives & SSR X-Robots-Tag Header Builder
+
+```tsx
+import { buildXRobotsTagHeader, buildXRobotsTagHeaderString } from 'react-helmet-pro';
+
+// 1. In your Node.js / Express / Next.js SSR server response:
+app.get('/admin', (req, res) => {
+  const headers = buildXRobotsTagHeader({
+    index: false,
+    follow: false,
+    googleBot: { noarchive: true, maxSnippet: 0 },
+    customCrawlers: { GPTBot: { index: false } },
+  });
+
+  res.set(headers);
+  // Sets Header: "X-Robots-Tag: noindex, nofollow, googlebot: noarchive, max-snippet:0, gptbot: noindex"
+});
+```
+
+---
+
+### International SEO & Hreflang Management (`LocalizedSeo`)
+
+Manage multi-regional and multi-lingual web applications with automatic BCP 47 locale normalization, `x-default` resolution, self-referencing links, title/description language maps, and deterministic tag sorting.
+
+```tsx
+import { LocalizedSeo } from 'react-helmet-pro';
+
+function MultiLingualProductPage() {
+  return (
+    <LocalizedSeo
+      currentLocale="fr-FR"
+      locales={{
+        'en-US': 'https://example.com/en/product',
+        'fr-FR': 'https://example.com/fr/produit',
+        'de-DE': 'https://example.com/de/produkt',
+      }}
+      titleMap={{
+        'en-US': 'Awesome Widget',
+        'fr-FR': 'Produit Formidable',
+        'de-DE': 'Tolles Produkt',
+      }}
+      descriptionMap={{
+        'en-US': 'Buy our awesome widget online.',
+        'fr-FR': 'Achetez notre produit formidable en ligne.',
+      }}
+      autoXDefault={true}         // Automatically adds hreflang="x-default"
+      autoSelfReference={true}    // Guarantees self-referencing hreflang tag
+    />
+  );
+  // Automatically renders:
+  // - <title>Produit Formidable</title>
+  // - <html lang="fr-FR">
+  // - <link rel="canonical" href="https://example.com/fr/produit" />
+  // - <link rel="alternate" hreflang="de-DE" href="https://example.com/de/produkt" />
+  // - <link rel="alternate" hreflang="en-US" href="https://example.com/en/product" />
+  // - <link rel="alternate" hreflang="fr-FR" href="https://example.com/fr/produit" />
+  // - <link rel="alternate" hreflang="x-default" href="https://example.com/en/product" />
+}
+```
 
 
 

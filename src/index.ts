@@ -1,6 +1,7 @@
 export * from './components/Helmet';
 export * from './components/Seo';
 export * from './components/ArticleSeo';
+export * from './components/LocalizedSeo';
 export * from './components/SiteSeo';
 export * from './components/StructuredData';
 export * from './components/JsonLdScript';
@@ -20,7 +21,9 @@ export * from './core/SSRUtils';
 export * from './core/auditHelmetState';
 export * from './middlewares/appendSiteName';
 export * from './middlewares/injectLocale';
+export * from './utils/localeNormalizer';
 export * from './utils/mergeHelmet';
+export * from './utils/robotsBuilder';
 export * from './utils/schemaBuilder';
 export * from './utils/seoDefaults';
 export * from './utils/tagFactory';
