@@ -296,6 +296,12 @@ URL policies can be set on `<HelmetProvider>` or overridden per-component:
 - **Migration**: Fully backward compatible. All existing `<HelmetProvider>` and `<Seo>` configurations continue to work without modification.
 - **Bundle Impact**: ~1.2 KB gzipped addition for complete typed defaults resolution, nested context merging, automatic Open Graph / Twitter fallback derivations, and canonical URL normalization policies.
 
+```
+
+#### Backward-Compatible Migration & Bundle Impact
+
+- **Migration**: Fully backward compatible. All existing `<HelmetProvider>` and `<Seo>` configurations continue to work without modification.
+- **Bundle Impact**: ~1.2 KB gzipped addition for complete typed defaults resolution, nested context merging, and automatic Open Graph / Twitter fallback derivations.
 
 
 ### Add Title and Meta Tags
