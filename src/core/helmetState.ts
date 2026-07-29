@@ -251,6 +251,7 @@ export const normalizeHelmetProps = (props: Partial<HelmetProps> = {}): HelmetDe
     htmlAttributes: copyAttributes(props.htmlAttributes),
     link: copyTags(props.link),
     meta: copyTags(props.meta),
+    nonce: props.nonce,
     noscript: copyTags(props.noscript),
     onChangeClientState: props.onChangeClientState,
     prioritizeSeoTags: props.prioritizeSeoTags ?? false,
@@ -446,6 +447,8 @@ export const reduceHelmetInstances = (instances: Iterable<HelmetInstance>): Redu
   let style: TagEntry<StyleTag>[] = [];
   let noscript: TagEntry<NoscriptTag>[] = [];
 
+  let nonce: string | undefined;
+
   ordered.forEach(({ data }) => {
     bodyAttributes = mergeAttributes(bodyAttributes, data.bodyAttributes);
     htmlAttributes = mergeAttributes(htmlAttributes, data.htmlAttributes);
@@ -463,6 +466,10 @@ export const reduceHelmetInstances = (instances: Iterable<HelmetInstance>): Redu
       defaultTitle = data.defaultTitle;
     }
 
+    if (data.nonce !== undefined) {
+      nonce = data.nonce;
+    }
+
     defer = data.defer;
     encodeSpecialCharacters = data.encodeSpecialCharacters;
     prioritizeSeoTags = prioritizeSeoTags || data.prioritizeSeoTags;
@@ -478,21 +485,46 @@ export const reduceHelmetInstances = (instances: Iterable<HelmetInstance>): Redu
     }
   });
 
+  const allScripts = script.map((entry) => {
+    const s = { ...entry.tag };
+    if (nonce && !s.nonce && (s.innerHTML !== undefined || s.type === "application/ld+json")) {
+      s.nonce = nonce;
+    }
+    return s;
+  });
+
+  const allStyles = style.map((entry) => {
+    const st = { ...entry.tag };
+    if (nonce && !st.nonce) {
+      st.nonce = nonce;
+    }
+    return st;
+  });
+
+  const headScripts = allScripts.filter(
+    (s) => !s.tagPosition || s.tagPosition === "head",
+  );
+  const bodyOpenScripts = allScripts.filter((s) => s.tagPosition === "bodyOpen");
+  const bodyCloseScripts = allScripts.filter((s) => s.tagPosition === "bodyClose");
+
   return {
     callbacks,
     state: {
       base: base.map((entry) => entry.tag),
       bodyAttributes,
+      bodyCloseScripts,
+      bodyOpenScripts,
       defaultTitle,
       defer,
       encodeSpecialCharacters,
       htmlAttributes,
       link: link.map((entry) => entry.tag),
       meta: meta.map((entry) => entry.tag),
+      nonce,
       noscript: noscript.map((entry) => entry.tag),
       prioritizeSeoTags,
-      script: script.map((entry) => entry.tag),
-      style: style.map((entry) => entry.tag),
+      script: headScripts,
+      style: allStyles,
       title: applyTitleTemplate(title, titleTemplate, defaultTitle),
       titleAttributes,
       titleTemplate,
@@ -542,6 +574,8 @@ const createTagComponent = (
     ...attributes,
     key: `${tagName}-${index}`,
   };
+  delete props.tagPosition;
+  delete props["tag-position"];
 
   if (contentKey === "innerHTML" && typeof attributes.innerHTML === "string") {
     delete props.innerHTML;
@@ -565,7 +599,11 @@ const serializeTag = (
   contentKey?: "innerHTML" | "cssText",
 ): string => {
   const content = contentKey ? attributes[contentKey] : undefined;
-  const filteredAttributes = omitKeys(attributes, [contentKey ?? "__none__"]) as HelmetAttributes;
+  const filteredAttributes = omitKeys(attributes, [
+    contentKey ?? "__none__",
+    "tagPosition",
+    "tag-position",
+  ]) as HelmetAttributes;
   const serializedAttributes = serializeAttributes(filteredAttributes, encodeSpecialCharacters);
   const attributePrefix = serializedAttributes ? ` ${serializedAttributes}` : "";
 
@@ -700,6 +738,8 @@ export const buildServerState = (state: HelmetState): HelmetServerState => {
   return {
     base: createListAccessor("base", state.base, state.encodeSpecialCharacters),
     bodyAttributes: createAttributeAccessor(state.bodyAttributes, state.encodeSpecialCharacters),
+    bodyCloseScripts: createListAccessor("script", state.bodyCloseScripts ?? [], state.encodeSpecialCharacters, "innerHTML"),
+    bodyOpenScripts: createListAccessor("script", state.bodyOpenScripts ?? [], state.encodeSpecialCharacters, "innerHTML"),
     htmlAttributes: createAttributeAccessor(state.htmlAttributes, state.encodeSpecialCharacters),
     link: createListAccessor("link", link, state.encodeSpecialCharacters),
     meta: createListAccessor("meta", meta, state.encodeSpecialCharacters),

@@ -496,3 +496,36 @@ export const buildNextManifest = (value: NextManifestInput): NextManifest =>
     start_url: value.start_url ? toUrlString(value.start_url) : undefined,
     theme_color: value.theme_color,
   });
+
+export const defineNextRobots = (
+  configOrFn:
+    | NextRobotsRouteInput
+    | (() => Promise<NextRobotsRouteInput> | NextRobotsRouteInput),
+): (() => Promise<NextRobotsRoute>) => {
+  return async (): Promise<NextRobotsRoute> => {
+    const input = typeof configOrFn === "function" ? await configOrFn() : configOrFn;
+    return buildNextRobots(input);
+  };
+};
+
+export const defineNextSitemap = (
+  configOrFn:
+    | NextSitemapEntryInput[]
+    | (() => Promise<NextSitemapEntryInput[]> | NextSitemapEntryInput[]),
+): (() => Promise<NextSitemapEntry[]>) => {
+  return async (): Promise<NextSitemapEntry[]> => {
+    const input = typeof configOrFn === "function" ? await configOrFn() : configOrFn;
+    return buildNextSitemap(input);
+  };
+};
+
+export const defineNextManifest = (
+  configOrFn:
+    | NextManifestInput
+    | (() => Promise<NextManifestInput> | NextManifestInput),
+): (() => Promise<NextManifest>) => {
+  return async (): Promise<NextManifest> => {
+    const input = typeof configOrFn === "function" ? await configOrFn() : configOrFn;
+    return buildNextManifest(input);
+  };
+};

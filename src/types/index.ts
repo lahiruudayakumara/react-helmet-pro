@@ -1,6 +1,7 @@
 export * from "./defaults";
 export * from "./diagnostics";
 export * from "./localized";
+export * from "./resourceHints";
 export * from "./robots";
 export * from "./robotsTxt";
 export * from "./schemas";

@@ -476,3 +476,24 @@ export interface NextManifest {
   start_url?: string;
   theme_color?: string;
 }
+
+export interface ResolvingMetadata {
+  [key: string]: unknown;
+}
+
+export type GenerateMetadataFn<TProps = Record<string, unknown>> = (
+  props: TProps,
+  parent: ResolvingMetadata,
+) => Promise<NextMetadataInput> | NextMetadataInput;
+
+export interface NextConverterOptions {
+  defaults?: Record<string, unknown>;
+  siteUrl?: string;
+}
+
+export interface ServerJsonLdProps {
+  id?: string;
+  nonce?: string;
+  schema: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+

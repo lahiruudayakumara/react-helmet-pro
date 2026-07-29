@@ -23,17 +23,18 @@ export interface HelmetFallbackOptions {
 
 export interface HelmetSeoDefaults {
   baseUrl?: string;
+  defaultTitle?: string;
   description?: string;
   fallbacks?: HelmetFallbackOptions | boolean;
   image?: string | HelmetSocialImageDefaults;
   locale?: string;
+  nonce?: string;
   openGraph?: Partial<SeoOpenGraph>;
   robots?: SeoRobotsDirectives;
   siteName?: string;
   siteUrl?: string;
   socialImage?: string | HelmetSocialImageDefaults;
   titleTemplate?: string;
-  defaultTitle?: string;
   twitter?: Partial<SeoTwitter>;
   urlPolicy?: UrlNormalizationOptions;
   verification?: SeoVerification;

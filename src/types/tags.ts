@@ -10,31 +10,53 @@ export interface MetaTag extends HelmetAttributes {
   content?: string;
   httpEquiv?: string;
   itemProp?: string;
+  key?: string;
   name?: string;
   property?: string;
 }
 
 export interface LinkTag extends HelmetAttributes {
+  as?: string;
+  crossOrigin?: string;
+  fetchPriority?: string;
   href?: string;
+  imageSizes?: string;
+  imageSrcSet?: string;
+  integrity?: string;
+  key?: string;
+  media?: string;
+  nonce?: string;
   rel?: string;
+  sizes?: string;
+  type?: string;
 }
 
 export interface ScriptTag extends HelmetAttributes {
   async?: boolean;
+  crossOrigin?: string;
   defer?: boolean;
+  fetchPriority?: string;
   innerHTML?: string;
+  integrity?: string;
+  key?: string;
+  nonce?: string;
   src?: string;
+  tagPosition?: "head" | "bodyOpen" | "bodyClose";
   type?: string;
 }
 
 export interface StyleTag extends HelmetAttributes {
   cssText?: string;
+  key?: string;
   media?: string;
+  nonce?: string;
   type?: string;
 }
 
 export interface NoscriptTag extends HelmetAttributes {
   innerHTML?: string;
+  key?: string;
+  tagPosition?: "head" | "bodyOpen" | "bodyClose";
 }
 
 export interface BaseTag extends HelmetAttributes {
@@ -53,10 +75,13 @@ export interface HelmetTagCollection {
 
 export interface HelmetState extends HelmetTagCollection {
   bodyAttributes: HelmetAttributes;
+  bodyCloseScripts?: ScriptTag[];
+  bodyOpenScripts?: ScriptTag[];
   defaultTitle?: string;
   defer: boolean;
   encodeSpecialCharacters: boolean;
   htmlAttributes: HelmetAttributes;
+  nonce?: string;
   prioritizeSeoTags: boolean;
   title?: string;
   titleAttributes: HelmetAttributes;
@@ -82,6 +107,8 @@ export interface HelmetServerAttributeAccessor {
 export interface HelmetServerState {
   base: HelmetServerTagAccessor<BaseTag>;
   bodyAttributes: HelmetServerAttributeAccessor;
+  bodyCloseScripts: HelmetServerTagAccessor<ScriptTag>;
+  bodyOpenScripts: HelmetServerTagAccessor<ScriptTag>;
   htmlAttributes: HelmetServerAttributeAccessor;
   link: HelmetServerTagAccessor<LinkTag>;
   meta: HelmetServerTagAccessor<MetaTag>;
@@ -112,6 +139,7 @@ export interface HelmetProps {
   htmlAttributes?: HelmetAttributes;
   link?: LinkTag[];
   meta?: MetaTag[];
+  nonce?: string;
   noscript?: NoscriptTag[];
   onChangeClientState?: HelmetChangeHandler;
   prioritizeSeoTags?: boolean;
@@ -128,6 +156,8 @@ export interface HelmetProviderProps {
   context?: HelmetServerContext;
   defaults?: HelmetSeoDefaults;
   enableDevDiagnostics?: boolean;
+  helmetData?: HelmetDataContainer;
+  nonce?: string;
 }
 
 export interface HelmetContextValue extends HelmetState {
