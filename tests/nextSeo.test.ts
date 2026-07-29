@@ -232,4 +232,77 @@ describe("Next.js SEO helpers", () => {
       theme_color: "#111111",
     });
   });
+
+  describe("App Router Bidirectional Converter & Helpers", () => {
+    it("converts HelmetProps to Next.js Metadata and back", async () => {
+      const { helmetToNextMetadata, nextMetadataToHelmet, createGenerateMetadata } = await import("../src/next");
+
+      const helmetProps = {
+        title: "Product Title",
+        link: [
+          { rel: "canonical", href: "https://acme.com/products/widget" },
+          { rel: "alternate", hreflang: "de", href: "https://acme.com/de/products/widget" },
+        ],
+        meta: [
+          { name: "description", content: "Great product" },
+          { property: "og:title", content: "OG Product Title" },
+          { property: "og:image", content: "https://acme.com/og.jpg" },
+          { name: "twitter:card", content: "summary_large_image" },
+        ],
+      };
+
+      const nextMetadata = helmetToNextMetadata(helmetProps);
+
+      expect(nextMetadata.title).toBe("Product Title");
+      expect(nextMetadata.description).toBe("Great product");
+      expect(nextMetadata.alternates?.canonical).toBe("https://acme.com/products/widget");
+      expect(nextMetadata.alternates?.languages?.de).toBe("https://acme.com/de/products/widget");
+      expect(nextMetadata.openGraph?.title).toBe("OG Product Title");
+
+      const convertedBack = nextMetadataToHelmet(nextMetadata);
+      expect(convertedBack.title).toBe("Product Title");
+      expect(convertedBack.link).toContainEqual({ rel: "canonical", href: "https://acme.com/products/widget" });
+      expect(convertedBack.meta).toContainEqual({ name: "description", content: "Great product" });
+
+      const generateMetadata = createGenerateMetadata(async () => ({
+        title: "Dynamic Product",
+        alternates: { canonical: "/products/widget" },
+      }), { siteUrl: "https://acme.com" });
+
+      const metadata = await generateMetadata({}, {});
+      expect(metadata.title).toBe("Dynamic Product");
+      expect(metadata.alternates?.canonical).toBe("https://acme.com/products/widget");
+    });
+
+    it("renders ServerJsonLd and route definitions", async () => {
+      const { renderServerJsonLd, defineNextRobots, defineNextSitemap, defineNextManifest } = await import("../src/next");
+
+      const jsonLdHtml = renderServerJsonLd({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: "</script><script>alert('xss')</script>",
+      }, { id: "product-schema", nonce: "test-nonce" });
+
+      expect(jsonLdHtml).toContain('id="product-schema"');
+      expect(jsonLdHtml).toContain('nonce="test-nonce"');
+      expect(jsonLdHtml).not.toContain("</script><script>");
+      expect(jsonLdHtml).toContain("\\u003C/script>");
+
+      const getRobots = defineNextRobots({
+        rules: { allow: "/", userAgent: "*" },
+        sitemap: "https://acme.com/sitemap.xml",
+      });
+      const robots = await getRobots();
+      expect(robots.sitemap).toBe("https://acme.com/sitemap.xml");
+
+      const getSitemap = defineNextSitemap([{ url: "https://acme.com" }]);
+      const sitemap = await getSitemap();
+      expect(sitemap[0].url).toBe("https://acme.com");
+
+      const getManifest = defineNextManifest({ name: "Acme App" });
+      const manifest = await getManifest();
+      expect(manifest.name).toBe("Acme App");
+    });
+  });
 });
+

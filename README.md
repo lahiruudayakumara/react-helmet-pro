@@ -509,7 +509,6 @@ function GraphPage() {
 - **Automatic Merging**: Entities with identical `@id` and compatible `@type` are deeply merged. Primitive array fields are deduplicated.
 - **Conflict Warning**: Mismatched `@type` definitions under the same `@id` generate a `RHP_SEO_GRAPH_CONFLICT` diagnostic warning.
 - **Circular References**: Safely handled during serialization without stack overflows.
-- **Hydration Safety**: Uses a stable script ID (`rhp-jsonld-graph`) to prevent duplicate script tags during SSR and client navigation.
 
 ### Sitemap, Robots.txt, and Indexing Route Generators
 
@@ -587,6 +586,8 @@ export const GET = createSitemapRouteHandler([
 // app/robots.txt/route.ts
 import { createRobotsTxtRouteHandler } from 'react-helmet-pro';
 
+---
+
 ### Head Tag Identity Matrix, Concurrency & State Restoration
 
 `react-helmet-pro` uses a deterministic tag identity matrix to decide when head tags overwrite each other versus when multiple declarations coexist.
@@ -620,6 +621,84 @@ import { Helmet, getTagIdentityKey } from 'react-helmet-pro';
 // Query identity key programmatically
 const key = getTagIdentityKey('meta', { property: 'og:image', content: 'https://example.com/cover-1.jpg' });
 // "meta:property:og:image:https://example.com/cover-1.jpg"
+```
+---
+
+### CSP Nonces, Secure Tag Placement, and Performance Resource Hints
+
+Request-scoped Content Security Policy (CSP) nonce propagation, body tag placement collections (`bodyOpen`, `bodyClose`), typed resource hint components (`<Preload />`, `<Preconnect />`, `<DnsPrefetch />`), and Subresource Integrity (SRI) validation.
+
+#### 1. Request-Scoped CSP Nonce Propagation
+
+```tsx
+import { HelmetProvider, Helmet } from 'react-helmet-pro';
+
+// 1. Pass request-scoped nonce to HelmetProvider
+<HelmetProvider nonce={req.cspNonce}>
+  <App />
+</HelmetProvider>
+
+// All inline <script>, <style>, and JSON-LD scripts automatically inherit nonce="rAnd0mN0nc3"!
+```
+
+#### 2. Secure Tag Placement (`bodyOpen` and `bodyClose` SSR Extraction)
+
+```tsx
+<Helmet>
+  {/* Injected into <head> */}
+  <script src="/head-script.js" />
+
+  {/* Injected at top of <body> */}
+  <script tagPosition="bodyOpen" dangerouslySetInnerHTML={{ __html: 'console.log("Top of body")' }} />
+
+  {/* Injected at bottom of <body> right before </body> */}
+  <script tagPosition="bodyClose" src="/analytics-bottom.js" />
+</Helmet>
+```
+
+In Server-Side Rendering (Node.js / Next.js / Remix):
+```tsx
+const context = {};
+const appHtml = renderToString(<HelmetProvider context={context}><App /></HelmetProvider>);
+const { helmet } = context;
+
+// Access bodyOpen and bodyClose collections cleanly:
+const bodyOpenHtml = helmet.bodyOpenScripts.toString();
+const bodyCloseHtml = helmet.bodyCloseScripts.toString();
+```
+
+#### 3. Typed Performance Resource Hint Components
+
+```tsx
+import { Preload, ModulePreload, Preconnect, DnsPrefetch, Prefetch } from 'react-helmet-pro';
+
+// Preload fonts, scripts, and responsive hero images
+<Preload
+  href="/fonts/inter.woff2"
+  as="font"
+  type="font/woff2"
+  crossOrigin="anonymous"
+/>
+
+<Preload
+  href="/hero.jpg"
+  as="image"
+  imageSrcSet="/hero-400.jpg 400w, /hero-800.jpg 800w"
+  imageSizes="100vw"
+  fetchPriority="high"
+/>
+
+// Preconnect to CDNs & API origins
+<Preconnect href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+<DnsPrefetch href="https://cdn.example.com" />
+<Prefetch href="/next-page" />
+```
+
+#### Threat Model & Security Diagnostics
+- **SRI Enforcement**: Triggers `RHP_SECURITY_MISSING_SRI` suggestions for cross-origin scripts/stylesheets lacking `integrity` hashes.
+- **Duplicate Hint Detection**: Triggers `RHP_SECURITY_DUPLICATE_RESOURCE_HINT` warnings when duplicate `preconnect` or `dns-prefetch` directives target the same origin.
+- **Strict Scheme Validation**: Catches malicious `javascript:` or unexpected protocol schemes.
+=======
 ```
 
 ---
@@ -698,6 +777,122 @@ import { Preload, ModulePreload, Preconnect, DnsPrefetch, Prefetch } from 'react
 - **SRI Enforcement**: Triggers `RHP_SECURITY_MISSING_SRI` suggestions for cross-origin scripts/stylesheets lacking `integrity` hashes.
 - **Duplicate Hint Detection**: Triggers `RHP_SECURITY_DUPLICATE_RESOURCE_HINT` warnings when duplicate `preconnect` or `dns-prefetch` directives target the same origin.
 - **Strict Scheme Validation**: Catches malicious `javascript:` or unexpected protocol schemes.
+
+
+
+
+---
+
+### Next.js App Router Integration (`react-helmet-pro/next`)
+
+A zero-runtime-dependency, version-aware Next.js App Router integration. All utilities work as pure functions importable in Next.js 13, 14, 15 and non-Next.js environments alike.
+
+#### Metadata Mapping Table
+
+| `react-helmet-pro` | Next.js `Metadata` |
+|---|---|
+| `title` | `metadata.title` (string or `{ default, absolute, template }`) |
+| `link rel="canonical"` | `metadata.alternates.canonical` |
+| `link rel="alternate" hreflang="..."` | `metadata.alternates.languages` |
+| `meta name="description"` | `metadata.description` |
+| `meta property="og:title"` | `metadata.openGraph.title` |
+| `meta property="og:description"` | `metadata.openGraph.description` |
+| `meta property="og:image"` | `metadata.openGraph.images[]` |
+| `meta property="og:url"` | `metadata.openGraph.url` |
+| `meta name="twitter:card"` | `metadata.twitter.card` |
+| `meta name="robots"` | `metadata.robots` |
+| `meta name="google-site-verification"` | `metadata.verification.google` |
+| JSON-LD `<script type="application/ld+json">` | `<ServerJsonLd schema={...} />` (RSC) |
+
+#### 1. Bidirectional Conversion
+
+```tsx
+import { helmetToNextMetadata, nextMetadataToHelmet } from 'react-helmet-pro/next';
+
+// Helmet → Next.js (for App Router generateMetadata)
+const helmProps = {
+  title: 'Product Title',
+  meta: [{ name: 'description', content: 'Great product' }],
+  link: [{ rel: 'canonical', href: 'https://acme.com/products/widget' }],
+};
+const metadata = helmetToNextMetadata(helmProps);
+// { title: 'Product Title', description: 'Great product', alternates: { canonical: 'https://acme.com/products/widget' } }
+
+// Next.js → Helmet (for hybrid Pages Router / Client components)
+const backToHelmet = nextMetadataToHelmet(metadata);
+```
+
+#### 2. `createGenerateMetadata` — App Router `generateMetadata` Helper
+
+```ts
+// app/products/[id]/page.tsx
+import { createGenerateMetadata } from 'react-helmet-pro/next';
+
+export const generateMetadata = createGenerateMetadata(
+  async ({ params }) => ({
+    title: `Product ${params.id}`,
+    description: 'View product details.',
+    alternates: { canonical: `/products/${params.id}` }, // relative URLs auto-resolved
+  }),
+  { siteUrl: 'https://acme.com' }
+);
+```
+
+#### 3. Server Component-safe JSON-LD
+
+```tsx
+// app/products/[id]/page.tsx (React Server Component - no 'use client')
+import { ServerJsonLd } from 'react-helmet-pro/next';
+
+export default async function ProductPage({ params }) {
+  return (
+    <>
+      <ServerJsonLd
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: 'Widget',
+          offers: { '@type': 'Offer', price: '29.99', priceCurrency: 'USD' },
+        }}
+        id="product-schema"
+        nonce={nonce}
+      />
+    </>
+  );
+}
+```
+
+#### 4. File-Based Metadata Routes
+
+```ts
+// app/robots.ts
+import { defineNextRobots } from 'react-helmet-pro/next';
+export const dynamic = 'force-static';
+export default defineNextRobots({
+  rules: [{ userAgent: '*', allow: '/' }, { userAgent: 'Googlebot', disallow: '/private' }],
+  sitemap: 'https://acme.com/sitemap.xml',
+});
+
+// app/sitemap.ts
+import { defineNextSitemap } from 'react-helmet-pro/next';
+export default defineNextSitemap(async () => {
+  const pages = await fetchPages();
+  return pages.map((p) => ({ url: p.url, lastModified: p.updatedAt, priority: 0.8 }));
+});
+
+// app/manifest.ts
+import { defineNextManifest } from 'react-helmet-pro/next';
+export default defineNextManifest({ name: 'Acme App', short_name: 'Acme', start_url: '/', display: 'standalone' });
+```
+
+#### Next.js Version Support Policy
+
+| Next.js Version | Supported | Notes |
+|---|---|---|
+| 13 (App Router) | ✅ | `generateMetadata`, RSC, file routes |
+| 14 | ✅ | Full support |
+| 15 | ✅ | Full support, Turbopack compatible |
+| Pages Router (`pages/`) | ✅ | Use `nextMetadataToHelmet` + `<Helmet>` |
 
 ### Add Title and Meta Tags
 
