@@ -376,6 +376,258 @@ function MultiLingualProductPage() {
 }
 ```
 
+---
+
+### Expanded Google Search Structured Data (JSON-LD)
+
+Framework-agnostic pure schema builders and type-safe React components for major Google Search rich features.
+
+> [!NOTE]
+> **Eligibility Disclaimer**:
+> Adding structured data enhances eligibility for Google search rich features, but rich result display is subject to Google's search algorithms and site quality guidelines.
+
+#### React JSON-LD Component Helpers
+
+```tsx
+import {
+  ProductJsonLd,
+  JobPostingJsonLd,
+  EventJsonLd,
+  LocalBusinessJsonLd,
+  RecipeJsonLd,
+} from 'react-helmet-pro';
+
+// 1. E-Commerce Product with Offers, Merchant Return Policy & Shipping Details
+<ProductJsonLd
+  product={{
+    name: 'Pro Audio Headphones',
+    description: 'Noise cancelling studio headphones.',
+    brand: 'Acme Sound',
+    sku: 'ACME-HEADPHONE-01',
+    offers: {
+      price: 199.99,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      hasMerchantReturnPolicy: {
+        merchantReturnDays: 30,
+        returnFees: 'https://schema.org/FreeReturn',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      },
+      shippingDetails: {
+        shippingDestination: { addressCountry: 'US' },
+        shippingRate: { currency: 'USD', value: 0 },
+      },
+    },
+  }}
+/>
+
+// 2. Job Posting
+<JobPostingJsonLd
+  jobPosting={{
+    title: 'Senior Frontend Engineer',
+    description: 'We are hiring a React and Next.js specialist.',
+    datePosted: '2026-07-29',
+    hiringOrganization: { name: 'Acme Inc', logo: 'https://example.com/logo.png' },
+    jobLocation: { addressLocality: 'San Francisco', addressCountry: 'US' },
+  }}
+/>
+```
+
+#### Pure Framework-Independent Builders
+
+```tsx
+import {
+  buildProductSchema,
+  buildJobPostingSchema,
+  buildEventSchema,
+  buildRecipeSchema,
+  buildLocalBusinessSchema,
+} from 'react-helmet-pro';
+
+// Pure JavaScript objects suitable for Next.js Metadata API, Remix, Svelte, or Node backends
+const productJson = buildProductSchema({
+  name: 'Studio Monitor',
+  offers: { price: 299.99, priceCurrency: 'USD' },
+});
+```
+
+#### Supported Schema Catalog & References
+
+| Category | Supported Schemas & Components | Specification References |
+|---|---|---|
+| **E-Commerce** | `ProductJsonLd`, `ProductGroupJsonLd`, `Offer`, `MerchantReturnPolicy`, `OfferShippingDetails` | [Google Product Snippets](https://developers.google.com/search/docs/appearance/structured-data/product-information) \| [Schema.org Product](https://schema.org/Product) |
+| **Business & Employment** | `LocalBusinessJsonLd`, `JobPostingJsonLd` | [Google Job Posting](https://developers.google.com/search/docs/appearance/structured-data/job-posting) \| [Schema.org LocalBusiness](https://schema.org/LocalBusiness) |
+---
+
+### JSON-LD Graph Composition & Entity Registry (`StructuredDataGraph`)
+
+Compose complex web graphs of organizations, websites, products, and articles without duplicating entity nodes. Entities sharing the same `@id` are automatically deduplicated and deeply merged.
+
+```tsx
+import {
+  StructuredDataGraph,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+  buildArticleSchema,
+  createEntityRef,
+} from 'react-helmet-pro';
+
+function GraphPage() {
+  const org = {
+    ...buildOrganizationSchema({ name: 'Acme Corp', logo: 'https://example.com/logo.png' }),
+    '@id': 'https://example.com/#organization',
+  };
+
+  const site = {
+    ...buildWebSiteSchema({ name: 'Acme Portal', url: 'https://example.com' }),
+    '@id': 'https://example.com/#website',
+    publisher: createEntityRef('https://example.com/#organization'),
+  };
+
+  const article = {
+    ...buildArticleSchema({ headline: 'Graph Composition in React' }),
+    '@id': 'https://example.com/blog/article-1#article',
+    publisher: createEntityRef('https://example.com/#organization'),
+    isPartOf: createEntityRef('https://example.com/#website'),
+  };
+
+  return <StructuredDataGraph entities={[org, site, article]} />;
+}
+// Outputs single unified JSON-LD @graph:
+// {
+//   "@context": "https://schema.org",
+//   "@graph": [
+//     { "@id": "https://example.com/#organization", "@type": "Organization", ... },
+//     { "@id": "https://example.com/#website", "@type": "WebSite", ... },
+//     { "@id": "https://example.com/blog/article-1#article", "@type": "Article", ... }
+//   ]
+// }
+```
+
+#### Deduplication & Conflict Merging Rules
+- **Automatic Merging**: Entities with identical `@id` and compatible `@type` are deeply merged. Primitive array fields are deduplicated.
+- **Conflict Warning**: Mismatched `@type` definitions under the same `@id` generate a `RHP_SEO_GRAPH_CONFLICT` diagnostic warning.
+- **Circular References**: Safely handled during serialization without stack overflows.
+---
+
+### Sitemap, Robots.txt, and Indexing Route Generators
+
+Framework-agnostic pure builders, XML extensions (image, video, news, hreflang), protocol limit chunkers, typed `robots.txt` builder, CI production blocking safety audit, IndexNow payload adapter, and Next.js / Web standard route handlers.
+
+#### 1. Standards-Compliant Sitemap XML Generator (`buildSitemapXml`)
+
+```tsx
+import { buildSitemapXml, chunkSitemapUrls } from 'react-helmet-pro';
+
+const urls = [
+  {
+    loc: 'https://example.com/products/widget',
+    lastmod: '2026-07-29',
+    changefreq: 'weekly',
+    priority: 0.8,
+    alternates: [{ hrefLang: 'fr', href: 'https://example.com/fr/products/widget' }],
+    images: [{ url: 'https://example.com/widget.jpg', title: 'Pro Widget' }],
+  },
+];
+
+// Protocol limit chunking helper (max 50,000 URLs per file)
+const sitemapChunks = chunkSitemapUrls(urls, 50000);
+const sitemapXml = buildSitemapXml(sitemapChunks[0]);
+// Automatically includes xmlns:image and xmlns:xhtml namespaces only when present!
+```
+
+#### 2. Typed Robots.txt Builder & CI Safety Audit (`isProductionRobotsBlocking`)
+
+```tsx
+import { buildRobotsTxt, isProductionRobotsBlocking } from 'react-helmet-pro';
+
+const robotsTxt = buildRobotsTxt({
+  host: 'https://example.com',
+  rules: [
+    { userAgent: '*', allow: '/', disallow: ['/admin', '/private'] },
+    { userAgent: 'GPTBot', disallow: '/' },
+  ],
+  sitemaps: ['https://example.com/sitemap.xml'],
+});
+
+// CI / CD Production Safety Audit:
+if (process.env.NODE_ENV === 'production' && isProductionRobotsBlocking(robotsTxt)) {
+  throw new Error('CRITICAL SEO FAILURE: Production robots.txt contains Disallow: / blocking search engine crawlers!');
+}
+```
+
+#### 3. IndexNow Instant Indexing Submission
+
+```tsx
+import { buildIndexNowPayload, submitIndexNowPayload } from 'react-helmet-pro';
+
+// 1. Build validated payload
+const payload = buildIndexNowPayload({
+  host: 'example.com',
+  key: '805a4f4e7c10423bb0d97034b76a08c0',
+  urlList: ['https://example.com/blog/new-article'],
+});
+
+// 2. Opt-in submission
+await submitIndexNowPayload(payload);
+```
+
+#### 4. Next.js App Router & Web Standard Server Route Handlers
+
+```tsx
+// app/sitemap.xml/route.ts
+import { createSitemapRouteHandler } from 'react-helmet-pro';
+
+export const GET = createSitemapRouteHandler([
+  { loc: 'https://example.com/', priority: 1.0 },
+  { loc: 'https://example.com/about', priority: 0.8 },
+]);
+
+// app/robots.txt/route.ts
+import { createRobotsTxtRouteHandler } from 'react-helmet-pro';
+
+---
+
+### Head Tag Identity Matrix, Concurrency & State Restoration
+
+`react-helmet-pro` uses a deterministic tag identity matrix to decide when head tags overwrite each other versus when multiple declarations coexist.
+
+#### Tag Identity Precedence Matrix
+
+| Tag Type | Identity Discriminator | Behaviour & Multi-Value Policy |
+|---|---|---|
+| **Explicit Key** | `key="custom-id"` | Overrides any tag with matching `key` regardless of attributes |
+| **Single-Instance Meta** | `name="description"`, `name="viewport"`, `property="og:title"` | Single active instance; nested overrides parent |
+| **Repeatable Meta** | `property="og:image"`, `property="article:author"`, `property="og:see_also"` | Multiple distinct values coexist; identical duplicates deduplicated |
+| **Icon Links** | `rel="icon"` + `sizes="32x32"` | Differentiated by size and href; distinct favicon sizes coexist |
+| **Stylesheet & Links** | `rel="stylesheet"`, `rel="canonical"` | Canonical is single instance; stylesheets differentiated by `href` |
+
+#### Explicit Key Overrides & Repeatable Tags
+
+```tsx
+import { Helmet, getTagIdentityKey } from 'react-helmet-pro';
+
+// 1. Explicit Key Override: Overrides theme-color regardless of content
+<Helmet>
+  <meta key="theme" name="theme-color" content="#ffffff" />
+</Helmet>
+
+// 2. Repeatable OG Images: Multiple images coexist for rich social previews
+<Helmet>
+  <meta property="og:image" content="https://example.com/cover-1.jpg" />
+  <meta property="og:image" content="https://example.com/cover-2.jpg" />
+</Helmet>
+
+// Query identity key programmatically
+const key = getTagIdentityKey('meta', { property: 'og:image', content: 'https://example.com/cover-1.jpg' });
+// "meta:property:og:image:https://example.com/cover-1.jpg"
+```
+
+#### React 18/19 Strict Mode & Suspense Resilience
+- **Strict Mode Idempotency**: Component double rendering in `React.StrictMode` produces zero duplicate tags or memory leaks.
+- **Suspense & Async Loading**: Unmounted lazy components clean up their head tags automatically, restoring parent or fallback metadata deterministically.
+- **100% Request Isolation**: Server-side rendering (`HelmetData({ context })`) maintains complete request isolation across concurrent Node.js SSR requests without global mutable state.
+
 ### Add Title and Meta Tags
 
 ```tsx
