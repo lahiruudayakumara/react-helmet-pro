@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import type { HelmetSeoDefaults } from "./defaults";
 import type { AuditHelmetStateOptions } from "./diagnostics";
 
 export type HelmetAttributeValue = string | number | boolean | null | undefined;
@@ -125,10 +126,12 @@ export interface HelmetProviderProps {
   auditOptions?: AuditHelmetStateOptions;
   children: ReactNode;
   context?: HelmetServerContext;
+  defaults?: HelmetSeoDefaults;
   enableDevDiagnostics?: boolean;
 }
 
 export interface HelmetContextValue extends HelmetState {
+  defaults?: HelmetSeoDefaults;
   dispatcher: unknown;
   setHead: (data: Partial<HelmetProps>) => void;
 }
