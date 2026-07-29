@@ -457,8 +457,59 @@ const productJson = buildProductSchema({
 |---|---|---|
 | **E-Commerce** | `ProductJsonLd`, `ProductGroupJsonLd`, `Offer`, `MerchantReturnPolicy`, `OfferShippingDetails` | [Google Product Snippets](https://developers.google.com/search/docs/appearance/structured-data/product-information) \| [Schema.org Product](https://schema.org/Product) |
 | **Business & Employment** | `LocalBusinessJsonLd`, `JobPostingJsonLd` | [Google Job Posting](https://developers.google.com/search/docs/appearance/structured-data/job-posting) \| [Schema.org LocalBusiness](https://schema.org/LocalBusiness) |
-| **Events & Media** | `EventJsonLd`, `RecipeJsonLd`, `VideoObjectJsonLd`, `SoftwareApplicationJsonLd` | [Google Events](https://developers.google.com/search/docs/appearance/structured-data/event) \| [Schema.org Event](https://schema.org/Event) |
-| **Community & Data** | `ProfilePageJsonLd`, `DiscussionForumPostingJsonLd`, `CourseJsonLd`, `DatasetJsonLd` | [Google Profile Page](https://developers.google.com/search/docs/appearance/structured-data/profile-page) \| [Schema.org Dataset](https://schema.org/Dataset) |
+---
+
+### JSON-LD Graph Composition & Entity Registry (`StructuredDataGraph`)
+
+Compose complex web graphs of organizations, websites, products, and articles without duplicating entity nodes. Entities sharing the same `@id` are automatically deduplicated and deeply merged.
+
+```tsx
+import {
+  StructuredDataGraph,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+  buildArticleSchema,
+  createEntityRef,
+} from 'react-helmet-pro';
+
+function GraphPage() {
+  const org = {
+    ...buildOrganizationSchema({ name: 'Acme Corp', logo: 'https://example.com/logo.png' }),
+    '@id': 'https://example.com/#organization',
+  };
+
+  const site = {
+    ...buildWebSiteSchema({ name: 'Acme Portal', url: 'https://example.com' }),
+    '@id': 'https://example.com/#website',
+    publisher: createEntityRef('https://example.com/#organization'),
+  };
+
+  const article = {
+    ...buildArticleSchema({ headline: 'Graph Composition in React' }),
+    '@id': 'https://example.com/blog/article-1#article',
+    publisher: createEntityRef('https://example.com/#organization'),
+    isPartOf: createEntityRef('https://example.com/#website'),
+  };
+
+  return <StructuredDataGraph entities={[org, site, article]} />;
+}
+// Outputs single unified JSON-LD @graph:
+// {
+//   "@context": "https://schema.org",
+//   "@graph": [
+//     { "@id": "https://example.com/#organization", "@type": "Organization", ... },
+//     { "@id": "https://example.com/#website", "@type": "WebSite", ... },
+//     { "@id": "https://example.com/blog/article-1#article", "@type": "Article", ... }
+//   ]
+// }
+```
+
+#### Deduplication & Conflict Merging Rules
+- **Automatic Merging**: Entities with identical `@id` and compatible `@type` are deeply merged. Primitive array fields are deduplicated.
+- **Conflict Warning**: Mismatched `@type` definitions under the same `@id` generate a `RHP_SEO_GRAPH_CONFLICT` diagnostic warning.
+- **Circular References**: Safely handled during serialization without stack overflows.
+- **Hydration Safety**: Uses a stable script ID (`rhp-jsonld-graph`) to prevent duplicate script tags during SSR and client navigation.
+
 
 
 
