@@ -188,7 +188,14 @@ const parseChildrenIntoDescriptor = (children: React.ReactNode, descriptor: Helm
     }
 
     const tagName = child.type.toLowerCase();
-    const props = (child.props ?? {}) as Record<string, unknown>;
+    const rawProps = (child.props ?? {}) as Record<string, unknown>;
+    const elementKey =
+      child.key && !String(child.key).startsWith(".")
+        ? String(child.key)
+        : undefined;
+    const props = elementKey
+      ? { key: elementKey, ...rawProps }
+      : rawProps;
 
     switch (tagName) {
       case "html":
@@ -261,66 +268,124 @@ export const normalizeHelmetProps = (props: Partial<HelmetProps> = {}): HelmetDe
   return descriptor;
 };
 
-const getMetaDedupeKey = (tag: MetaTag): string => {
-  if (tag.charSet) {
-    return "meta:charset";
+export const REPEATABLE_META_PROPERTIES = new Set([
+  "og:image",
+  "og:image:url",
+  "og:image:secure_url",
+  "og:image:alt",
+  "og:image:type",
+  "og:image:width",
+  "og:image:height",
+  "article:author",
+  "article:tag",
+  "og:see_also",
+  "music:musician",
+  "video:actor",
+  "video:director",
+  "video:tag",
+]);
+
+export const getTagIdentityKey = (
+  tagName: string,
+  attributes: HelmetAttributes = {},
+): string => {
+  const normTag = tagName.toLowerCase();
+
+  if (attributes.key) {
+    return `${normTag}:key:${attributes.key}`;
   }
 
-  if (tag.name) {
-    return `meta:name:${tag.name}`;
+  if (normTag === "meta") {
+    if (attributes.charSet) {
+      return "meta:charset";
+    }
+
+    if (attributes.name) {
+      return `meta:name:${String(attributes.name).toLowerCase()}`;
+    }
+
+    if (attributes.property) {
+      const prop = String(attributes.property).toLowerCase();
+      if (REPEATABLE_META_PROPERTIES.has(prop)) {
+        return `meta:property:${prop}:${String(attributes.content ?? "")}`;
+      }
+      return `meta:property:${prop}`;
+    }
+
+    if (attributes.httpEquiv) {
+      return `meta:httpEquiv:${String(attributes.httpEquiv).toLowerCase()}`;
+    }
+
+    if (attributes.itemProp) {
+      return `meta:itemProp:${String(attributes.itemProp).toLowerCase()}`;
+    }
+
+    return `meta:${JSON.stringify(attributes)}`;
   }
 
-  if (tag.property) {
-    return `meta:property:${tag.property}`;
+  if (normTag === "link") {
+    const rel = String(attributes.rel ?? "").toLowerCase();
+
+    if (rel === "canonical") {
+      return "link:canonical";
+    }
+
+    if (rel === "alternate" && attributes.hrefLang) {
+      return `link:alternate:lang:${String(attributes.hrefLang).toLowerCase()}`;
+    }
+
+    if (rel === "alternate" && attributes.media) {
+      return `link:alternate:media:${attributes.media}`;
+    }
+
+    if (rel === "icon" && attributes.sizes) {
+      return `link:icon:${attributes.sizes}:${attributes.href ?? ""}`;
+    }
+
+    if (rel === "stylesheet" && attributes.href) {
+      return `link:stylesheet:${attributes.href}`;
+    }
+
+    if (rel && attributes.href) {
+      return `link:${rel}:${attributes.href}`;
+    }
+
+    return `link:${JSON.stringify(attributes)}`;
   }
 
-  if (tag.httpEquiv) {
-    return `meta:httpEquiv:${tag.httpEquiv}`;
+  if (normTag === "script") {
+    if (attributes.src) {
+      return `script:src:${attributes.src}`;
+    }
+    return `script:inline:${attributes.type ?? "text/javascript"}:${attributes.innerHTML ?? ""}`;
   }
 
-  if (tag.itemProp) {
-    return `meta:itemProp:${tag.itemProp}`;
+  if (normTag === "style") {
+    return `style:${attributes.media ?? "all"}:${attributes.cssText ?? ""}`;
   }
 
-  return `meta:${JSON.stringify(tag)}`;
+  if (normTag === "noscript") {
+    return `noscript:${attributes.innerHTML ?? ""}`;
+  }
+
+  if (normTag === "base") {
+    return `base:${attributes.href ?? ""}:${attributes.target ?? ""}`;
+  }
+
+  return `${normTag}:${JSON.stringify(attributes)}`;
 };
 
-const getLinkDedupeKey = (tag: LinkTag): string => {
-  const rel = tag.rel ?? "";
+const getMetaDedupeKey = (tag: MetaTag): string => getTagIdentityKey("meta", tag);
 
-  if (rel === "canonical") {
-    return "link:canonical";
-  }
+const getLinkDedupeKey = (tag: LinkTag): string => getTagIdentityKey("link", tag);
 
-  if (rel === "alternate" && tag.hrefLang) {
-    return `link:alternate:${tag.hrefLang}`;
-  }
+const getScriptDedupeKey = (tag: ScriptTag): string => getTagIdentityKey("script", tag);
 
-  if (rel && tag.sizes) {
-    return `link:${rel}:${tag.sizes}`;
-  }
+const getStyleDedupeKey = (tag: StyleTag): string => getTagIdentityKey("style", tag);
 
-  if (rel && tag.media) {
-    return `link:${rel}:${tag.media}`;
-  }
+const getNoscriptDedupeKey = (tag: NoscriptTag): string => getTagIdentityKey("noscript", tag);
 
-  if (rel && tag.href) {
-    return `link:${rel}:${tag.href}`;
-  }
-
-  return `link:${JSON.stringify(tag)}`;
-};
-
-const getScriptDedupeKey = (tag: ScriptTag): string =>
-  tag.src ? `script:src:${tag.src}` : `script:inline:${tag.type ?? "text/javascript"}:${tag.innerHTML ?? ""}`;
-
-const getStyleDedupeKey = (tag: StyleTag): string =>
-  `style:${tag.media ?? "all"}:${tag.cssText ?? ""}`;
-
-const getNoscriptDedupeKey = (tag: NoscriptTag): string => `noscript:${tag.innerHTML ?? ""}`;
-
-const getBaseDedupeKey = (tag: BaseTag): string =>
-  `base:${tag.href ?? ""}:${tag.target ?? ""}`;
+const getBaseDedupeKey = (tag: BaseTag): string => getTagIdentityKey("base", tag);
 
 const mergeTagEntries = <T>(
   current: TagEntry<T>[],
@@ -331,12 +396,17 @@ const mergeTagEntries = <T>(
     return current;
   }
 
-  const keys = new Set(next.map(getDedupeKey));
-  const withoutDuplicates = current.filter((entry) => !keys.has(entry.dedupeKey));
-
+  const nextDeduplicatedMap = new Map<string, T>();
   next.forEach((tag) => {
+    nextDeduplicatedMap.set(getDedupeKey(tag), tag);
+  });
+
+  const nextKeys = new Set(nextDeduplicatedMap.keys());
+  const withoutDuplicates = current.filter((entry) => !nextKeys.has(entry.dedupeKey));
+
+  nextDeduplicatedMap.forEach((tag, key) => {
     withoutDuplicates.push({
-      dedupeKey: getDedupeKey(tag),
+      dedupeKey: key,
       tag,
     });
   });

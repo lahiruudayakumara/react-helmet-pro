@@ -1309,7 +1309,6 @@ const auditJsonLd = (
   diagnostics: HelmetDiagnostic[],
 ) => {
   const graph = new JsonLdGraph();
-
   state.script.forEach((tag, index) => {
     if (
       typeof tag.type === "string" &&
@@ -1352,7 +1351,6 @@ const auditJsonLd = (
       schemas.forEach((schema) => {
         if (typeof schema === "object" && schema !== null) {
           const s = schema as Record<string, unknown>;
-
           if (Array.isArray(s["@graph"])) {
             (s["@graph"] as Record<string, unknown>[]).forEach((item) => {
               if (typeof item === "object" && item !== null) {

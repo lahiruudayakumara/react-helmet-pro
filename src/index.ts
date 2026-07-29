@@ -29,6 +29,7 @@ export * from './hooks/useHelmetMiddleware';
 export * from './hooks/useSeoDefaults';
 export * from './context/HelmetProvider';
 export * from './core/HelmetData';
+export { getTagIdentityKey, REPEATABLE_META_PROPERTIES } from './core/helmetState';
 export * from './core/SSRUtils';
 export * from './core/auditHelmetState';
 export * from './middlewares/appendSiteName';
