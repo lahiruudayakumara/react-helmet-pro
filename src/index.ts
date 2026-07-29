@@ -33,6 +33,7 @@ export * from './core/SSRUtils';
 export * from './core/auditHelmetState';
 export * from './middlewares/appendSiteName';
 export * from './middlewares/injectLocale';
+export * from './generators';
 export * from './utils/jsonLdGraph';
 export * from './utils/localeNormalizer';
 export * from './utils/mergeHelmet';

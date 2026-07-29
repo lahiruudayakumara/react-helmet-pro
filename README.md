@@ -508,7 +508,90 @@ function GraphPage() {
 - **Automatic Merging**: Entities with identical `@id` and compatible `@type` are deeply merged. Primitive array fields are deduplicated.
 - **Conflict Warning**: Mismatched `@type` definitions under the same `@id` generate a `RHP_SEO_GRAPH_CONFLICT` diagnostic warning.
 - **Circular References**: Safely handled during serialization without stack overflows.
-- **Hydration Safety**: Uses a stable script ID (`rhp-jsonld-graph`) to prevent duplicate script tags during SSR and client navigation.
+---
+
+### Sitemap, Robots.txt, and Indexing Route Generators
+
+Framework-agnostic pure builders, XML extensions (image, video, news, hreflang), protocol limit chunkers, typed `robots.txt` builder, CI production blocking safety audit, IndexNow payload adapter, and Next.js / Web standard route handlers.
+
+#### 1. Standards-Compliant Sitemap XML Generator (`buildSitemapXml`)
+
+```tsx
+import { buildSitemapXml, chunkSitemapUrls } from 'react-helmet-pro';
+
+const urls = [
+  {
+    loc: 'https://example.com/products/widget',
+    lastmod: '2026-07-29',
+    changefreq: 'weekly',
+    priority: 0.8,
+    alternates: [{ hrefLang: 'fr', href: 'https://example.com/fr/products/widget' }],
+    images: [{ url: 'https://example.com/widget.jpg', title: 'Pro Widget' }],
+  },
+];
+
+// Protocol limit chunking helper (max 50,000 URLs per file)
+const sitemapChunks = chunkSitemapUrls(urls, 50000);
+const sitemapXml = buildSitemapXml(sitemapChunks[0]);
+// Automatically includes xmlns:image and xmlns:xhtml namespaces only when present!
+```
+
+#### 2. Typed Robots.txt Builder & CI Safety Audit (`isProductionRobotsBlocking`)
+
+```tsx
+import { buildRobotsTxt, isProductionRobotsBlocking } from 'react-helmet-pro';
+
+const robotsTxt = buildRobotsTxt({
+  host: 'https://example.com',
+  rules: [
+    { userAgent: '*', allow: '/', disallow: ['/admin', '/private'] },
+    { userAgent: 'GPTBot', disallow: '/' },
+  ],
+  sitemaps: ['https://example.com/sitemap.xml'],
+});
+
+// CI / CD Production Safety Audit:
+if (process.env.NODE_ENV === 'production' && isProductionRobotsBlocking(robotsTxt)) {
+  throw new Error('CRITICAL SEO FAILURE: Production robots.txt contains Disallow: / blocking search engine crawlers!');
+}
+```
+
+#### 3. IndexNow Instant Indexing Submission
+
+```tsx
+import { buildIndexNowPayload, submitIndexNowPayload } from 'react-helmet-pro';
+
+// 1. Build validated payload
+const payload = buildIndexNowPayload({
+  host: 'example.com',
+  key: '805a4f4e7c10423bb0d97034b76a08c0',
+  urlList: ['https://example.com/blog/new-article'],
+});
+
+// 2. Opt-in submission
+await submitIndexNowPayload(payload);
+```
+
+#### 4. Next.js App Router & Web Standard Server Route Handlers
+
+```tsx
+// app/sitemap.xml/route.ts
+import { createSitemapRouteHandler } from 'react-helmet-pro';
+
+export const GET = createSitemapRouteHandler([
+  { loc: 'https://example.com/', priority: 1.0 },
+  { loc: 'https://example.com/about', priority: 0.8 },
+]);
+
+// app/robots.txt/route.ts
+import { createRobotsTxtRouteHandler } from 'react-helmet-pro';
+
+export const GET = createRobotsTxtRouteHandler({
+  rules: [{ userAgent: '*', allow: '/' }],
+  sitemaps: ['https://example.com/sitemap.xml'],
+});
+```
+
 
 
 
