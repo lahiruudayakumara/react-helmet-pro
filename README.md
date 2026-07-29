@@ -457,6 +457,7 @@ const productJson = buildProductSchema({
 |---|---|---|
 | **E-Commerce** | `ProductJsonLd`, `ProductGroupJsonLd`, `Offer`, `MerchantReturnPolicy`, `OfferShippingDetails` | [Google Product Snippets](https://developers.google.com/search/docs/appearance/structured-data/product-information) \| [Schema.org Product](https://schema.org/Product) |
 | **Business & Employment** | `LocalBusinessJsonLd`, `JobPostingJsonLd` | [Google Job Posting](https://developers.google.com/search/docs/appearance/structured-data/job-posting) \| [Schema.org LocalBusiness](https://schema.org/LocalBusiness) |
+
 ---
 
 ### JSON-LD Graph Composition & Entity Registry (`StructuredDataGraph`)
@@ -508,6 +509,7 @@ function GraphPage() {
 - **Automatic Merging**: Entities with identical `@id` and compatible `@type` are deeply merged. Primitive array fields are deduplicated.
 - **Conflict Warning**: Mismatched `@type` definitions under the same `@id` generate a `RHP_SEO_GRAPH_CONFLICT` diagnostic warning.
 - **Circular References**: Safely handled during serialization without stack overflows.
+
 ---
 
 ### Sitemap, Robots.txt, and Indexing Route Generators
