@@ -7,6 +7,7 @@ import { isSafeSeoUrl } from "../core/auditHelmetState";
 import { safeJsonLdStringify } from "../next";
 import type { HelmetAttributes, LinkTag, MetaTag, ScriptTag } from "../types";
 import type { HelmetFallbackOptions } from "../types/defaults";
+import type { UrlNormalizationOptions } from "../types/urlPolicy";
 import { resolveSeoProps } from "../utils/seoDefaults";
 import { Helmet } from "./Helmet";
 
@@ -114,6 +115,8 @@ export interface SeoProps {
   fallbacks?: HelmetFallbackOptions | boolean;
   /** Disables all automatic social and metadata fallbacks. */
   disableFallbacks?: boolean;
+  /** Opt-in URL resolution and normalization policies for canonical, OG, and alternate URLs. */
+  urlPolicy?: UrlNormalizationOptions;
 }
 
 const appendPropertyMeta = (list: MetaTag[], property: string, content?: string | number) => {

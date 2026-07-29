@@ -51,7 +51,7 @@ describe("Provider SEO defaults and automatic social metadata fallbacks", () => 
     );
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
       "href",
-      "https://example.com",
+      "https://example.com/",
     );
     expect(document.querySelector('meta[property="og:site_name"]')).toHaveAttribute(
       "content",

@@ -1,4 +1,5 @@
 import type { SeoOpenGraph, SeoRobotsDirectives, SeoTwitter, SeoVerification } from "../components/Seo";
+import type { UrlNormalizationOptions } from "./urlPolicy";
 
 export interface HelmetSocialImageDefaults {
   alt?: string;
@@ -34,5 +35,6 @@ export interface HelmetSeoDefaults {
   titleTemplate?: string;
   defaultTitle?: string;
   twitter?: Partial<SeoTwitter>;
+  urlPolicy?: UrlNormalizationOptions;
   verification?: SeoVerification;
 }
