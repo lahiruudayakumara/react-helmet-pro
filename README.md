@@ -628,11 +628,6 @@ const key = getTagIdentityKey('meta', { property: 'og:image', content: 'https://
 - **Suspense & Async Loading**: Unmounted lazy components clean up their head tags automatically, restoring parent or fallback metadata deterministically.
 - **100% Request Isolation**: Server-side rendering (`HelmetData({ context })`) maintains complete request isolation across concurrent Node.js SSR requests without global mutable state.
 
-
-
-
-
-
 ### Add Title and Meta Tags
 
 ```tsx

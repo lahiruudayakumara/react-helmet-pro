@@ -1309,7 +1309,6 @@ const auditJsonLd = (
   diagnostics: HelmetDiagnostic[],
 ) => {
   const graph = new JsonLdGraph();
-
   state.script.forEach((tag, index) => {
     if (
       typeof tag.type === "string" &&
