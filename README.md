@@ -100,6 +100,125 @@ function App() {
 }
 ```
 
+### Site-Wide Provider SEO Defaults & Social Metadata Fallbacks
+
+Configure consistent site-wide SEO defaults once on `<HelmetProvider>` while preserving explicit page overrides.
+
+#### Precedence Hierarchy
+
+Metadata fields are resolved according to a strict, predictable precedence hierarchy:
+
+$$\text{Library Defaults} < \text{Provider Defaults} < \text{Nested Provider Defaults} < \text{Page Overrides}$$
+
+Explicit values provided at the page level (on `<Seo />`, `<ArticleSeo />`, `<SiteSeo />`, or `<Helmet />`) are **never** overwritten by fallbacks or provider defaults.
+
+#### Provider Defaults Configuration
+
+```tsx
+import { HelmetProvider, Seo } from 'react-helmet-pro';
+
+function App() {
+  return (
+    <HelmetProvider
+      defaults={{
+        baseUrl: 'https://example.com',
+        siteName: 'My Awesome Application',
+        titleTemplate: '%s | My Awesome Application',
+        defaultTitle: 'My Awesome Application',
+        locale: 'en_US',
+        description: 'Site-wide default description for search engines and social previews.',
+        socialImage: {
+          url: 'https://example.com/default-og.png',
+          alt: 'Site logo preview',
+          width: 1200,
+          height: 630,
+        },
+        robots: { index: true, follow: true, maxImagePreview: 'large' },
+        verification: { google: 'google-site-verification-token' },
+        twitter: { site: '@my_app_handle', creator: '@author_handle' },
+      }}
+    >
+      <MainApp />
+    </HelmetProvider>
+  );
+}
+
+// On any page: minimal props automatically inherit site defaults & social fallbacks!
+function DashboardPage() {
+  return (
+    <Seo
+      title="Dashboard"
+      canonical="/dashboard"
+    />
+  );
+  // Resolves:
+  // - title: "Dashboard | My Awesome Application"
+  // - canonical: "https://example.com/dashboard"
+  // - og:site_name: "My Awesome Application"
+  // - og:description: "Site-wide default description..."
+  // - og:image: "https://example.com/default-og.png"
+  // - twitter:card: "summary_large_image"
+  // - twitter:site: "@my_app_handle"
+  // - twitter:title: "Dashboard"
+}
+```
+
+#### Automatic Social Metadata Fallbacks
+
+When Open Graph or Twitter metadata is missing on a page, `react-helmet-pro` automatically derives social metadata:
+- **Open Graph**: `og:title` derived from `title`, `og:description` derived from `description`, `og:url` derived from `canonical` / `baseUrl`, `og:site_name` from `siteName`, `og:locale` from `locale`, and `og:image` from `socialImage` / `image`.
+- **Twitter Cards**: `twitter:title` derived from Open Graph title or `title`, `twitter:description` derived from Open Graph description or `description`, `twitter:image` derived from Open Graph image or `socialImage`, and `twitter:card` derived from image presence (`summary_large_image`).
+
+#### Disabling Fallbacks
+
+You can disable fallbacks globally, per-provider, or per-component:
+
+```tsx
+// 1. Disable globally or per-provider
+<HelmetProvider defaults={{ fallbacks: false }}>
+  ...
+</HelmetProvider>
+
+// 2. Selectively disable only Twitter fallbacks
+<HelmetProvider defaults={{ fallbacks: { twitter: false } }}>
+  ...
+</HelmetProvider>
+
+// 3. Disable fallbacks on a specific page component
+<Seo disableFallbacks title="Special Page" />
+```
+
+#### Nested Provider Inheritance
+
+Nested `<HelmetProvider>` instances inherit and merge SEO defaults from parent providers:
+
+```tsx
+<HelmetProvider defaults={{ siteName: 'Parent Portal', locale: 'en' }}>
+  <HelmetProvider defaults={{ siteName: 'Blog Sub-site' }}>
+    {/* Child pages inherit locale 'en' from parent and siteName 'Blog Sub-site' from nested provider */}
+  </HelmetProvider>
+</HelmetProvider>
+```
+
+#### Reading Active Defaults (`useSeoDefaults`)
+
+Use the `useSeoDefaults()` hook inside any component to inspect active merged provider defaults:
+
+```tsx
+import { useSeoDefaults } from 'react-helmet-pro';
+
+function BrandingFooter() {
+  const seoDefaults = useSeoDefaults();
+  return <footer>{seoDefaults?.siteName}</footer>;
+}
+```
+
+#### Backward-Compatible Migration & Bundle Impact
+
+- **Migration**: Fully backward compatible. All existing `<HelmetProvider>` and `<Seo>` configurations continue to work without modification.
+- **Bundle Impact**: ~1.2 KB gzipped addition for complete typed defaults resolution, nested context merging, and automatic Open Graph / Twitter fallback derivations.
+
+
 ### Add Title and Meta Tags
 
 ```tsx

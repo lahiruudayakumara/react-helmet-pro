@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import { HelmetDispatcher } from "../core/HelmetDispatcher";
 import { getCanUseDOM, setCanUseDOM } from "../core/runtime";
+import { mergeSeoDefaults } from "../utils/seoDefaults";
 import { HelmetContext } from "./HelmetContext";
 
 import type { HelmetProviderProps } from "../types";
@@ -16,18 +17,29 @@ const HelmetProviderBase: React.FC<HelmetProviderProps> = ({
   auditOptions,
   children,
   context,
+  defaults,
   enableDevDiagnostics,
 }) => {
-  const dispatcher = useMemo(
-    () =>
-      new HelmetDispatcher({
-        auditOptions,
-        context,
-        enableDevDiagnostics,
-        manageDom: getCanUseDOM(),
-      }),
-    [auditOptions, context, enableDevDiagnostics],
+  const parentContext = useContext(HelmetContext);
+
+  const mergedDefaults = useMemo(
+    () => mergeSeoDefaults(parentContext?.defaults, defaults),
+    [parentContext?.defaults, defaults],
   );
+
+  const dispatcher = useMemo(() => {
+    if (parentContext?.dispatcher && !context) {
+      return parentContext.dispatcher as HelmetDispatcher;
+    }
+
+    return new HelmetDispatcher({
+      auditOptions,
+      context,
+      enableDevDiagnostics,
+      manageDom: getCanUseDOM(),
+    });
+  }, [auditOptions, context, enableDevDiagnostics, parentContext?.dispatcher]);
+
   const [state, setState] = useState(() => dispatcher.getState());
 
   useEffect(() => {
@@ -40,10 +52,11 @@ const HelmetProviderBase: React.FC<HelmetProviderProps> = ({
   const value = useMemo(
     () => ({
       ...state,
+      defaults: mergedDefaults,
       dispatcher,
       setHead: dispatcher.setHead.bind(dispatcher),
     }),
-    [dispatcher, state],
+    [dispatcher, mergedDefaults, state],
   );
 
   return <HelmetContext.Provider value={value}>{children}</HelmetContext.Provider>;

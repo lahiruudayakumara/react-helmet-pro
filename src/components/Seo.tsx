@@ -1,10 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useContext } from "react";
 
+import { HelmetContext } from "../context/HelmetContext";
 import { isSafeSeoUrl } from "../core/auditHelmetState";
 import { safeJsonLdStringify } from "../next";
 import type { HelmetAttributes, LinkTag, MetaTag, ScriptTag } from "../types";
+import type { HelmetFallbackOptions } from "../types/defaults";
+import { resolveSeoProps } from "../utils/seoDefaults";
 import { Helmet } from "./Helmet";
 
 export interface SeoAlternateLink {
@@ -107,6 +110,10 @@ export interface SeoProps {
   verification?: SeoVerification;
   /** Places critical SEO tags in Helmet's priority SSR output. */
   prioritizeSeoTags?: boolean;
+  /** Controls automatic Open Graph, Twitter, canonical, and locale fallback behaviors. */
+  fallbacks?: HelmetFallbackOptions | boolean;
+  /** Disables all automatic social and metadata fallbacks. */
+  disableFallbacks?: boolean;
 }
 
 const appendPropertyMeta = (list: MetaTag[], property: string, content?: string | number) => {
@@ -260,27 +267,31 @@ const isSafeSeoMeta = (tag: MetaTag) => {
   });
 };
 
-export const Seo = ({
-  alternates,
-  author,
-  canonical,
-  defaultTitle,
-  description,
-  extraLink,
-  extraMeta,
-  htmlAttributes,
-  jsonLd,
-  keywords,
-  locale,
-  openGraph,
-  prioritizeSeoTags,
-  robots,
-  siteName,
-  title,
-  titleTemplate,
-  twitter,
-  verification,
-}: SeoProps) => {
+export const Seo = (rawProps: SeoProps) => {
+  const helmetContext = useContext(HelmetContext);
+  const resolvedProps = resolveSeoProps(rawProps, helmetContext?.defaults);
+
+  const {
+    alternates,
+    author,
+    canonical,
+    defaultTitle,
+    description,
+    extraLink,
+    extraMeta,
+    htmlAttributes,
+    jsonLd,
+    keywords,
+    locale,
+    openGraph: resolvedOpenGraph,
+    prioritizeSeoTags,
+    robots,
+    title,
+    titleTemplate,
+    twitter: resolvedTwitter,
+    verification,
+  } = resolvedProps;
+
   const meta: MetaTag[] = [];
   const link: LinkTag[] = [];
 
@@ -320,18 +331,6 @@ export const Seo = ({
     });
   });
 
-  const resolvedOpenGraph = openGraph
-    ? {
-        ...openGraph,
-        description: openGraph.description ?? description,
-        locale: openGraph.locale ?? locale,
-        siteName: openGraph.siteName ?? siteName,
-        title: openGraph.title ?? title,
-        type: openGraph.type ?? "website",
-        url: openGraph.url ?? canonical,
-      }
-    : undefined;
-
   appendPropertyMeta(meta, "og:type", resolvedOpenGraph?.type);
   appendPropertyMeta(meta, "og:url", resolvedOpenGraph?.url);
   appendPropertyMeta(meta, "og:title", resolvedOpenGraph?.title);
@@ -360,15 +359,6 @@ export const Seo = ({
     resolvedOpenGraph.authors?.forEach((entry) => appendPropertyMeta(meta, "article:author", entry));
     resolvedOpenGraph.tags?.forEach((entry) => appendPropertyMeta(meta, "article:tag", entry));
   }
-
-  const resolvedTwitter = twitter
-    ? {
-        ...twitter,
-        card: twitter.card ?? "summary_large_image",
-        description: twitter.description ?? description,
-        title: twitter.title ?? title,
-      }
-    : undefined;
 
   appendNameMeta(meta, "twitter:card", resolvedTwitter?.card);
   appendNameMeta(meta, "twitter:site", resolvedTwitter?.site);
