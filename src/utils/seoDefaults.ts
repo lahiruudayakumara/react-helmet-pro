@@ -1,5 +1,7 @@
 import type { SeoImage, SeoOpenGraph, SeoProps, SeoRobotsDirectives, SeoTwitter, SeoVerification } from "../components/Seo";
 import type { HelmetFallbackOptions, HelmetSeoDefaults, HelmetSocialImageDefaults } from "../types/defaults";
+import type { UrlNormalizationOptions } from "../types/urlPolicy";
+import { normalizeSeoUrl } from "./urlNormalizer";
 
 export const normalizeSocialImage = (
   image?: string | HelmetSocialImageDefaults,
@@ -15,16 +17,17 @@ export const normalizeSocialImage = (
   return { ...image };
 };
 
-export const resolveUrl = (url: string, baseUrl?: string): string => {
-  if (!baseUrl) {
-    return url;
-  }
+export const resolveUrl = (
+  url: string | URL,
+  baseUrl?: string | URL,
+  policy?: UrlNormalizationOptions,
+): string => {
+  const mergedPolicy: UrlNormalizationOptions = {
+    ...(policy ?? {}),
+    baseUrl: policy?.baseUrl ?? baseUrl,
+  };
 
-  try {
-    return new URL(url, baseUrl).href;
-  } catch {
-    return url;
-  }
+  return normalizeSeoUrl(url, mergedPolicy);
 };
 
 const mergeFallbackOptions = (
@@ -92,6 +95,28 @@ const mergeVerification = (
   };
 };
 
+const mergeUrlPolicy = (
+  parent?: UrlNormalizationOptions,
+  child?: UrlNormalizationOptions,
+): UrlNormalizationOptions | undefined => {
+  if (!parent && !child) {
+    return undefined;
+  }
+  if (!parent) {
+    return child;
+  }
+  if (!child) {
+    return parent;
+  }
+
+  return {
+    ...parent,
+    ...child,
+    allowedQueryParams: child.allowedQueryParams ?? parent.allowedQueryParams,
+    deniedQueryParams: child.deniedQueryParams ?? parent.deniedQueryParams,
+  };
+};
+
 export const mergeSeoDefaults = (
   parent?: HelmetSeoDefaults,
   child?: HelmetSeoDefaults,
@@ -122,6 +147,7 @@ export const mergeSeoDefaults = (
     titleTemplate: child.titleTemplate ?? parent.titleTemplate,
     defaultTitle: child.defaultTitle ?? parent.defaultTitle,
     twitter: parent.twitter || child.twitter ? { ...(parent.twitter ?? {}), ...(child.twitter ?? {}) } : undefined,
+    urlPolicy: mergeUrlPolicy(parent.urlPolicy, child.urlPolicy),
     verification: mergeVerification(parent.verification, child.verification),
   };
 };
@@ -184,6 +210,8 @@ export const resolveSeoProps = (
     providerDefaults?.fallbacks,
   );
 
+  const resolvedUrlPolicy = mergeUrlPolicy(providerDefaults?.urlPolicy, props.urlPolicy);
+
   const resolvedSiteName = props.siteName ?? providerDefaults?.siteName;
   const resolvedTitleTemplate = props.titleTemplate ?? providerDefaults?.titleTemplate;
   const resolvedDefaultTitle = props.defaultTitle ?? providerDefaults?.defaultTitle;
@@ -193,11 +221,11 @@ export const resolveSeoProps = (
 
   let resolvedCanonical = props.canonical;
   if (resolvedCanonical) {
-    if (resolvedBaseUrl && fallbackFlags.canonical) {
-      resolvedCanonical = resolveUrl(resolvedCanonical, resolvedBaseUrl);
+    if ((resolvedBaseUrl || resolvedUrlPolicy) && fallbackFlags.canonical) {
+      resolvedCanonical = resolveUrl(resolvedCanonical, resolvedBaseUrl, resolvedUrlPolicy);
     }
   } else if (resolvedBaseUrl && fallbackFlags.canonical) {
-    resolvedCanonical = resolvedBaseUrl;
+    resolvedCanonical = resolveUrl(resolvedBaseUrl, undefined, resolvedUrlPolicy);
   }
 
   const normalizedProviderImage = normalizeSocialImage(
@@ -220,7 +248,8 @@ export const resolveSeoProps = (
   if (fallbackFlags.openGraph) {
     const ogTitle = baseOg?.title ?? props.title ?? resolvedDefaultTitle;
     const ogDescription = baseOg?.description ?? resolvedDescription;
-    const ogUrl = baseOg?.url ?? resolvedCanonical;
+    const ogUrlRaw = baseOg?.url ?? resolvedCanonical;
+    const ogUrl = ogUrlRaw ? resolveUrl(ogUrlRaw, resolvedBaseUrl, resolvedUrlPolicy) : undefined;
     const ogSiteName = baseOg?.siteName ?? resolvedSiteName;
     const ogLocale = baseOg?.locale ?? resolvedLocale;
     const ogType = baseOg?.type ?? "website";
@@ -231,12 +260,18 @@ export const resolveSeoProps = (
         {
           alt: normalizedProviderImage.alt,
           height: normalizedProviderImage.height,
-          secureUrl: normalizedProviderImage.secureUrl,
+          secureUrl: normalizedProviderImage.secureUrl ? resolveUrl(normalizedProviderImage.secureUrl, resolvedBaseUrl, resolvedUrlPolicy) : undefined,
           type: normalizedProviderImage.type,
-          url: normalizedProviderImage.url,
+          url: resolveUrl(normalizedProviderImage.url, resolvedBaseUrl, resolvedUrlPolicy),
           width: normalizedProviderImage.width,
         },
       ];
+    } else if (ogImages?.length) {
+      ogImages = ogImages.map((image) => ({
+        ...image,
+        secureUrl: image.secureUrl ? resolveUrl(image.secureUrl, resolvedBaseUrl, resolvedUrlPolicy) : undefined,
+        url: resolveUrl(image.url, resolvedBaseUrl, resolvedUrlPolicy),
+      }));
     }
 
     if (
@@ -259,8 +294,11 @@ export const resolveSeoProps = (
         url: ogUrl,
       };
     }
-  } else {
-    finalOg = baseOg;
+  } else if (baseOg) {
+    finalOg = {
+      ...baseOg,
+      url: baseOg.url ? resolveUrl(baseOg.url, resolvedBaseUrl, resolvedUrlPolicy) : undefined,
+    };
   }
 
   // Twitter resolution
@@ -282,8 +320,10 @@ export const resolveSeoProps = (
       if (finalOg?.images?.length) {
         twImages = finalOg.images.map((img) => img.url);
       } else if (normalizedProviderImage) {
-        twImages = [normalizedProviderImage.url];
+        twImages = [resolveUrl(normalizedProviderImage.url, resolvedBaseUrl, resolvedUrlPolicy)];
       }
+    } else {
+      twImages = twImages.map((img) => resolveUrl(img, resolvedBaseUrl, resolvedUrlPolicy));
     }
 
     const twImageAlt =
@@ -317,8 +357,15 @@ export const resolveSeoProps = (
     finalTwitter = baseTwitter;
   }
 
+  // Normalize alternate hreflang links if urlPolicy or baseUrl present
+  const resolvedAlternates = props.alternates?.map((entry) => ({
+    ...entry,
+    href: resolveUrl(entry.href, resolvedBaseUrl, resolvedUrlPolicy),
+  }));
+
   return {
     ...props,
+    alternates: resolvedAlternates,
     canonical: resolvedCanonical,
     defaultTitle: resolvedDefaultTitle,
     description: resolvedDescription,
@@ -328,6 +375,7 @@ export const resolveSeoProps = (
     siteName: resolvedSiteName,
     titleTemplate: resolvedTitleTemplate,
     twitter: finalTwitter,
+    urlPolicy: resolvedUrlPolicy,
     verification: resolvedVerification,
   };
 };

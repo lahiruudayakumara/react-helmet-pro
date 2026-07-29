@@ -211,12 +211,91 @@ function BrandingFooter() {
   const seoDefaults = useSeoDefaults();
   return <footer>{seoDefaults?.siteName}</footer>;
 }
+}
+
+### Canonical URL Resolution & Normalization Policies
+
+Keep canonical, Open Graph, alternate `hreflang`, and structured-data URLs safe, canonical, and consistent across development, staging, and production environments.
+
+> [!NOTE]
+> **Normalization vs. HTTP Redirects**:
+> URL normalization standardizes head metadata (`<link rel="canonical">`, `<meta property="og:url">`, `hreflang`, and JSON-LD `@id`/`url` fields) rendered in HTML to prevent duplicate indexing by search crawlers. It does not replace server-side HTTP 301/302 redirects.
+
+#### Pure Normalization Utility (`normalizeSeoUrl`)
+
+Use `normalizeSeoUrl` or `createUrlNormalizer` as pure, environment-agnostic utilities (free of `window.location` dependencies) with identical SSR and client output.
+
+```tsx
+import { normalizeSeoUrl, createUrlNormalizer } from 'react-helmet-pro';
+
+// Accepts both string and URL object inputs
+const canonicalUrl = normalizeSeoUrl('/products/widget#overview?utm_source=ad&page=2', {
+  baseUrl: 'https://example.com',
+  trailingSlash: 'always',         // 'always' | 'never' | 'preserve'
+  stripFragment: true,             // Strips #hash fragments
+  stripTrackingParams: true,       // Strips utm_*, gclid, fbclid, etc.
+  sortQueryParams: true,           // Alphabetically sorts query keys
+});
+// Output: "https://example.com/products/widget/?page=2"
+
+// Factory pattern for reusable policies
+const normalizeDocUrl = createUrlNormalizer({
+  baseUrl: 'https://docs.example.com',
+  trailingSlash: 'never',
+  sortQueryParams: true,
+});
 ```
+
+#### Provider & Component Level Policies
+
+URL policies can be set on `<HelmetProvider>` or overridden per-component:
+
+```tsx
+<HelmetProvider
+  defaults={{
+    baseUrl: 'https://example.com',
+    urlPolicy: {
+      trailingSlash: 'never',
+      stripTrackingParams: true,
+      sortQueryParams: true,
+      allowedQueryParams: ['page', 'search', 'category'],
+    },
+  }}
+>
+  <App />
+</HelmetProvider>
+
+// On any page component:
+<Seo
+  title="Search Results"
+  canonical="/search?utm_source=ad&search=react&page=1"
+  urlPolicy={{
+    sortQueryParams: true,
+  }}
+/>
+// Automatically normalizes canonical link, og:url, and hreflang links:
+// - <link rel="canonical" href="https://example.com/search?page=1&search=react" />
+// - <meta property="og:url" content="https://example.com/search?page=1&search=react" />
+```
+
+#### Policy Configuration Options
+
+| Policy Option | Type | Description | Default |
+|---|---|---|---|
+| `baseUrl` | `string \| URL` | Base URL used to resolve relative pathnames | `undefined` |
+| `trailingSlash` | `'always' \| 'never' \| 'preserve'` | Appends or removes trailing slash (preserves file extensions like `.png`) | `'preserve'` |
+| `stripFragment` | `boolean` | Strips hash fragments (`#section`) from URL | `false` |
+| `stripTrackingParams` | `boolean` | Strips analytics/marketing parameters (`utm_*`, `gclid`, `fbclid`, etc.) | `false` |
+| `allowedQueryParams` | `string[]` | Strict allowlist of query parameters to retain | `undefined` |
+| `deniedQueryParams` | `string[]` | Denylist of query parameters to strip | `undefined` |
+| `sortQueryParams` | `boolean` | Alphabetically sorts query parameters for deterministic output | `false` |
+| `lowercaseHost` | `boolean` | Lowercases scheme and hostname (supports IDNs/Punycode and custom ports) | `true` |
 
 #### Backward-Compatible Migration & Bundle Impact
 
 - **Migration**: Fully backward compatible. All existing `<HelmetProvider>` and `<Seo>` configurations continue to work without modification.
-- **Bundle Impact**: ~1.2 KB gzipped addition for complete typed defaults resolution, nested context merging, and automatic Open Graph / Twitter fallback derivations.
+- **Bundle Impact**: ~1.2 KB gzipped addition for complete typed defaults resolution, nested context merging, automatic Open Graph / Twitter fallback derivations, and canonical URL normalization policies.
+
 
 
 ### Add Title and Meta Tags
