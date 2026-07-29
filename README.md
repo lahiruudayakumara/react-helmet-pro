@@ -376,8 +376,6 @@ function MultiLingualProductPage() {
 }
 ```
 
-
-
 ### Add Title and Meta Tags
 
 ```tsx
