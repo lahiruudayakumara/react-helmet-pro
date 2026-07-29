@@ -35,6 +35,7 @@ export interface HelmetSeoDefaults {
   siteUrl?: string;
   socialImage?: string | HelmetSocialImageDefaults;
   titleTemplate?: string;
+  defaultTitle?: string;
   twitter?: Partial<SeoTwitter>;
   urlPolicy?: UrlNormalizationOptions;
   verification?: SeoVerification;

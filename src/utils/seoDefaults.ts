@@ -211,7 +211,6 @@ export const resolveSeoProps = (
   );
 
   const resolvedUrlPolicy = mergeUrlPolicy(providerDefaults?.urlPolicy, props.urlPolicy);
-
   const resolvedSiteName = props.siteName ?? providerDefaults?.siteName;
   const resolvedTitleTemplate = props.titleTemplate ?? providerDefaults?.titleTemplate;
   const resolvedDefaultTitle = props.defaultTitle ?? providerDefaults?.defaultTitle;

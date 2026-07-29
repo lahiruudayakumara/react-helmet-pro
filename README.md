@@ -457,6 +457,7 @@ const productJson = buildProductSchema({
 |---|---|---|
 | **E-Commerce** | `ProductJsonLd`, `ProductGroupJsonLd`, `Offer`, `MerchantReturnPolicy`, `OfferShippingDetails` | [Google Product Snippets](https://developers.google.com/search/docs/appearance/structured-data/product-information) \| [Schema.org Product](https://schema.org/Product) |
 | **Business & Employment** | `LocalBusinessJsonLd`, `JobPostingJsonLd` | [Google Job Posting](https://developers.google.com/search/docs/appearance/structured-data/job-posting) \| [Schema.org LocalBusiness](https://schema.org/LocalBusiness) |
+
 ---
 
 ### JSON-LD Graph Composition & Entity Registry (`StructuredDataGraph`)
@@ -508,7 +509,7 @@ function GraphPage() {
 - **Automatic Merging**: Entities with identical `@id` and compatible `@type` are deeply merged. Primitive array fields are deduplicated.
 - **Conflict Warning**: Mismatched `@type` definitions under the same `@id` generate a `RHP_SEO_GRAPH_CONFLICT` diagnostic warning.
 - **Circular References**: Safely handled during serialization without stack overflows.
----
+- **Hydration Safety**: Uses a stable script ID (`rhp-jsonld-graph`) to prevent duplicate script tags during SSR and client navigation.
 
 ### Sitemap, Robots.txt, and Indexing Route Generators
 
@@ -585,8 +586,6 @@ export const GET = createSitemapRouteHandler([
 
 // app/robots.txt/route.ts
 import { createRobotsTxtRouteHandler } from 'react-helmet-pro';
-
----
 
 ### Head Tag Identity Matrix, Concurrency & State Restoration
 
@@ -699,12 +698,6 @@ import { Preload, ModulePreload, Preconnect, DnsPrefetch, Prefetch } from 'react
 - **SRI Enforcement**: Triggers `RHP_SECURITY_MISSING_SRI` suggestions for cross-origin scripts/stylesheets lacking `integrity` hashes.
 - **Duplicate Hint Detection**: Triggers `RHP_SECURITY_DUPLICATE_RESOURCE_HINT` warnings when duplicate `preconnect` or `dns-prefetch` directives target the same origin.
 - **Strict Scheme Validation**: Catches malicious `javascript:` or unexpected protocol schemes.
-
-
-
-
-
-
 
 ### Add Title and Meta Tags
 
