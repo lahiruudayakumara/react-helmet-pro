@@ -16,6 +16,7 @@ import {
   type LinkTag,
   type MetaTag,
 } from "../types";
+import { JsonLdGraph } from "../utils/jsonLdGraph";
 
 type UrlKind = "document" | "image" | "refresh" | "resource";
 
@@ -1307,6 +1308,7 @@ const auditJsonLd = (
   options: AuditHelmetStateOptions,
   diagnostics: HelmetDiagnostic[],
 ) => {
+  const graph = new JsonLdGraph();
   state.script.forEach((tag, index) => {
     if (
       typeof tag.type === "string" &&
@@ -1349,8 +1351,18 @@ const auditJsonLd = (
       schemas.forEach((schema) => {
         if (typeof schema === "object" && schema !== null) {
           const s = schema as Record<string, unknown>;
+          if (Array.isArray(s["@graph"])) {
+            (s["@graph"] as Record<string, unknown>[]).forEach((item) => {
+              if (typeof item === "object" && item !== null) {
+                graph.addEntity(item);
+              }
+            });
+          } else {
+            graph.addEntity(s);
+          }
+
           const contextStr = String(s["@context"] ?? "").toLowerCase();
-          if (!contextStr.includes("schema.org")) {
+          if (!contextStr.includes("schema.org") && !s["@graph"]) {
             addDiagnostic(
               diagnostics,
               {
@@ -1364,7 +1376,7 @@ const auditJsonLd = (
             );
           }
 
-          if (!s["@type"]) {
+          if (!s["@type"] && !s["@graph"]) {
             addDiagnostic(
               diagnostics,
               {
@@ -1379,6 +1391,20 @@ const auditJsonLd = (
         }
       });
     }
+  });
+
+  graph.getConflicts().forEach((conflict) => {
+    addDiagnostic(
+      diagnostics,
+      {
+        id: HELMET_SEO_RULE_IDS.GRAPH_CONFLICT,
+        message: conflict.reason,
+        source: createSource("script"),
+        value: conflict.id,
+      },
+      "warning",
+      options,
+    );
   });
 };
 

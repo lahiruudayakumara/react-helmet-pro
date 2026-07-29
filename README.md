@@ -460,8 +460,6 @@ const productJson = buildProductSchema({
 | **Events & Media** | `EventJsonLd`, `RecipeJsonLd`, `VideoObjectJsonLd`, `SoftwareApplicationJsonLd` | [Google Events](https://developers.google.com/search/docs/appearance/structured-data/event) \| [Schema.org Event](https://schema.org/Event) |
 | **Community & Data** | `ProfilePageJsonLd`, `DiscussionForumPostingJsonLd`, `CourseJsonLd`, `DatasetJsonLd` | [Google Profile Page](https://developers.google.com/search/docs/appearance/structured-data/profile-page) \| [Schema.org Dataset](https://schema.org/Dataset) |
 
-
-
 ### Add Title and Meta Tags
 
 ```tsx
