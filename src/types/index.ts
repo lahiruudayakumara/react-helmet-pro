@@ -2,6 +2,8 @@ export * from "./defaults";
 export * from "./diagnostics";
 export * from "./localized";
 export * from "./robots";
+export * from "./robotsTxt";
 export * from "./schemas";
+export * from "./sitemap";
 export * from "./tags";
 export * from "./urlPolicy";
