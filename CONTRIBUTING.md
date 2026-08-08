@@ -37,4 +37,4 @@ Before opening a pull request:
 
 - The package version is sourced from `package.json`.
 - Merges to `main` can create a matching Git tag and GitHub Release when the version is new.
-- Tag pushes like `v2.2.0` trigger the npm publish workflow.
+- Tag pushes like `v2.3.0` trigger the npm publish workflow.
