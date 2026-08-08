@@ -1,6 +1,6 @@
 {
   "name": "react-helmet-pro",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "A modern head manager for React, inspired by react-helmet with additional features and async support.",
   "homepage": "https://github.com/opencorex-org/react-helmet-pro#readme",
   "bugs": {
@@ -8,6 +8,9 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "react-helmet-pro-audit": "./dist/cli/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -48,6 +51,18 @@
     "./adapters": {
       "types": "./dist/adapters/index.d.ts",
       "default": "./dist/adapters/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "default": "./dist/cli/index.js"
+    },
+    "./eslint": {
+      "types": "./dist/eslint/index.d.ts",
+      "default": "./dist/eslint/index.js"
+    },
+    "./inspector": {
+      "types": "./dist/inspector/index.d.ts",
+      "default": "./dist/inspector/index.js"
     }
   },
   "scripts": {
