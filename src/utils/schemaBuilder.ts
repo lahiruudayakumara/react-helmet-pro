@@ -433,14 +433,16 @@ export const buildLocalBusinessSchema = (input: LocalBusinessSchemaInput) =>
   buildSchema(
     input.type ?? "LocalBusiness",
     compactObject({
-      address: compactObject({
-        "@type": "PostalAddress",
-        addressCountry: input.address.addressCountry,
-        addressLocality: input.address.addressLocality,
-        addressRegion: input.address.addressRegion,
-        postalCode: input.address.postalCode,
-        streetAddress: input.address.streetAddress,
-      }),
+      address: input.address
+        ? compactObject({
+            "@type": "PostalAddress",
+            addressCountry: input.address.addressCountry,
+            addressLocality: input.address.addressLocality,
+            addressRegion: input.address.addressRegion,
+            postalCode: input.address.postalCode,
+            streetAddress: input.address.streetAddress,
+          })
+        : undefined,
       description: input.description,
       geo: input.geo
         ? compactObject({
@@ -694,3 +696,67 @@ export const buildDatasetSchema = (input: DatasetSchemaInput) =>
       url: input.url,
     }),
   );
+
+export interface ImageObjectSchemaInput {
+  acquireLicensePage?: string;
+  caption?: string;
+  contentUrl?: string;
+  copyrightNotice?: string;
+  creditText?: string;
+  creator?: string | SchemaPerson;
+  description?: string;
+  license?: string;
+  name?: string;
+}
+
+export const buildImageObjectSchema = (input: ImageObjectSchemaInput) =>
+  buildSchema(
+    "ImageObject",
+    compactObject({
+      acquireLicensePage: input.acquireLicensePage,
+      caption: input.caption,
+      contentUrl: input.contentUrl,
+      copyrightNotice: input.copyrightNotice,
+      creditText: input.creditText,
+      creator: input.creator ? normalizeAuthor(input.creator) : undefined,
+      description: input.description,
+      license: input.license,
+      name: input.name,
+    }),
+  );
+
+export interface PaywallSchemaInput {
+  description?: string;
+  hasPart?: Array<{
+    cssSelector: string;
+    isAccessibleForFree: boolean;
+  }>;
+  headline: string;
+  isAccessibleForFree: boolean;
+  publisher?: ArticleSchemaPublisher;
+  url?: string;
+}
+
+export const buildPaywallSchema = (input: PaywallSchemaInput) =>
+  buildSchema(
+    "WebPage",
+    compactObject({
+      description: input.description,
+      hasPart: input.hasPart?.map((part) => ({
+        "@type": "WebPageElement",
+        cssSelector: part.cssSelector,
+        isAccessibleForFree: part.isAccessibleForFree,
+      })),
+      headline: input.headline,
+      isAccessibleForFree: input.isAccessibleForFree,
+      publisher: input.publisher
+        ? compactObject({
+            "@type": "Organization",
+            logo: input.publisher.logo,
+            name: input.publisher.name,
+          })
+        : undefined,
+      url: input.url,
+    }),
+  );
+

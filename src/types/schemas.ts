@@ -94,12 +94,12 @@ export interface ProductGroupSchemaInput {
 }
 
 export interface LocalBusinessSchemaInput {
-  address: {
-    addressCountry: string;
-    addressLocality: string;
+  address?: {
+    addressCountry?: string;
+    addressLocality?: string;
     addressRegion?: string;
     postalCode?: string;
-    streetAddress: string;
+    streetAddress?: string;
   };
   description?: string;
   geo?: {

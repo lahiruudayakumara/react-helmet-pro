@@ -1745,7 +1745,135 @@ These helpers return plain objects that fit modern Next.js App Router SEO APIs.
 
 ---
 
+## Vertical SEO APIs
+
+High-level domain-specific components synchronize HTML meta tags, Open Graph cards, canonical rules, and JSON-LD structured data from a single unified props object.
+
+> [!NOTE]
+> **Page Markup vs. Business Feeds**
+> Vertical SEO components manage on-page HTML `<head>` metadata and structured data (`schema.org`) for crawler indexing and Google Rich Results. They complement—rather than replace—bulk product catalog feeds (such as Google Merchant Center XML feeds).
+
+### Commerce (`<ProductSeo />`)
+
+Synchronizes e-commerce product title, description, price, currency, availability, rating, reviews, shipping details, return policies, and breadcrumbs.
+
+```tsx
+import { ProductSeo } from 'react-helmet-pro';
+
+<ProductSeo
+  title="Studio Pro Wireless Headphones"
+  description="High-fidelity active noise cancelling headphones."
+  canonical="https://example.com/products/headphones"
+  brand="AudioLab"
+  sku="AL-900"
+  images={[{ url: 'https://example.com/images/headphones.jpg' }]}
+  offers={[
+    {
+      price: 249.99,
+      priceCurrency: 'USD',
+      availability: 'InStock',
+      priceValidUntil: '2026-12-31',
+    },
+  ]}
+  rating={{ ratingValue: 4.9, ratingCount: 210 }}
+/>
+```
+
+### Local Business (`<LocalBusinessSeo />`)
+
+Synchronizes local business metadata, geo coordinates (`geo.position`, `ICBM`), telephone, address, and opening hours.
+
+```tsx
+import { LocalBusinessSeo } from 'react-helmet-pro';
+
+<LocalBusinessSeo
+  name="Artisan Coffee Roasters"
+  description="Specialty coffee roastery and cafe."
+  businessType="CafeOrCoffeeShop"
+  address={{
+    streetAddress: "100 Market St",
+    addressLocality: "San Francisco",
+    addressRegion: "CA",
+    postalCode: "94105",
+    addressCountry: "US",
+  }}
+  geo={{ latitude: 37.789, longitude: -122.401 }}
+  openingHours={[
+    { dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "07:00", closes: "18:00" }
+  ]}
+/>
+```
+
+### Video (`<VideoSeo />`)
+
+Synchronizes Open Graph video tags (`og:video`, `og:video:duration`) and `VideoObject` structured data.
+
+```tsx
+import { VideoSeo } from 'react-helmet-pro';
+
+<VideoSeo
+  title="React SSR Deep Dive"
+  description="Learn advanced server-side rendering and head management."
+  thumbnailUrl="https://example.com/thumb.jpg"
+  contentUrl="https://example.com/video.mp4"
+  uploadDate="2026-08-08"
+  duration="PT18M45S"
+/>
+```
+
+### Image (`<ImageSeo />`)
+
+Synchronizes image credit, creator, copyright notice, and licensing metadata.
+
+```tsx
+import { ImageSeo } from 'react-helmet-pro';
+
+<ImageSeo
+  title="Golden Gate Sunset"
+  imageUrl="https://example.com/photos/sunset.jpg"
+  creditText="Photo by Jane Doe"
+  creator="Jane Doe"
+  license="https://creativecommons.org/licenses/by/4.0/"
+/>
+```
+
+### Pagination & Infinite Scroll (`<PaginationSeo />`)
+
+Generates `<link rel="prev">`, `<link rel="next">`, canonical page URLs, and title page numbers (`Page N of M`).
+
+```tsx
+import { PaginationSeo } from 'react-helmet-pro';
+
+<PaginationSeo
+  title="Catalog Products"
+  baseUrl="https://example.com/catalog"
+  currentPage={2}
+  totalPages={10}
+/>
+```
+
+### Paywalled Content (`<PaywalledSeo />`)
+
+Synchronizes paywalled content markup (`isAccessibleForFree: false`) with CSS selector targets and built-in anti-cloaking diagnostic validation.
+
+```tsx
+import { PaywalledSeo } from 'react-helmet-pro';
+
+<PaywalledSeo
+  title="Exclusive Industry Analysis"
+  description="In-depth research report."
+  isAccessibleForFree={false}
+  parts={[
+    { cssSelector: ".free-summary", isAccessibleForFree: true },
+    { cssSelector: ".subscriber-content", isAccessibleForFree: false },
+  ]}
+/>
+```
+
+---
+
 ## SSR Support
+
 
 ### Server-side Helmet Tag Extraction
 

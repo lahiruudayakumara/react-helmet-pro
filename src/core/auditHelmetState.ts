@@ -1303,6 +1303,111 @@ const auditDates = (
   }
 };
 
+const isValidCssSelector = (selector: string): boolean => {
+  if (!selector || typeof selector !== "string") return false;
+  const trimmed = selector.trim();
+  if (trimmed === "") return false;
+  return /^[a-zA-Z0-9_.\-#\[\]=~^$*:"'\s>+~,()]+$/.test(trimmed);
+};
+
+const auditVerticalSchemas = (
+  schema: Record<string, unknown>,
+  tag: any,
+  index: number,
+  options: AuditHelmetStateOptions,
+  diagnostics: HelmetDiagnostic[],
+) => {
+  const type = String(schema["@type"] ?? "");
+
+  if (type === "Product") {
+    const offers = schema.offers;
+    const offerList = Array.isArray(offers) ? offers : offers ? [offers] : [];
+    for (const off of offerList) {
+      if (typeof off === "object" && off !== null) {
+        const o = off as Record<string, unknown>;
+        if (o.price === undefined || o.priceCurrency === undefined) {
+          addDiagnostic(
+            diagnostics,
+            {
+              id: HELMET_SEO_RULE_IDS.PRODUCT_OFFER_MISSING_PRICE,
+              message: "Product offer is missing required 'price' or 'priceCurrency' field.",
+              source: createSource("script", tag, "innerHTML", index),
+            },
+            "warning",
+            options,
+          );
+          break;
+        }
+      }
+    }
+  }
+
+  if (type === "LocalBusiness" || type.endsWith("Store") || type === "Restaurant") {
+    if (!schema.address && !schema.geo) {
+      addDiagnostic(
+        diagnostics,
+        {
+          id: HELMET_SEO_RULE_IDS.LOCAL_BUSINESS_MISSING_ADDRESS,
+          message: "LocalBusiness schema is missing 'address' or 'geo' coordinates.",
+          source: createSource("script", tag, "innerHTML", index),
+        },
+        "warning",
+        options,
+      );
+    }
+  }
+
+  if (type === "VideoObject") {
+    if (!schema.thumbnailUrl) {
+      addDiagnostic(
+        diagnostics,
+        {
+          id: HELMET_SEO_RULE_IDS.VIDEO_MISSING_THUMBNAIL,
+          message: "VideoObject schema is missing required 'thumbnailUrl' property.",
+          source: createSource("script", tag, "innerHTML", index),
+        },
+        "warning",
+        options,
+      );
+    }
+  }
+
+  if (schema.isAccessibleForFree === false) {
+    const hasPart = schema.hasPart;
+    const partsList = Array.isArray(hasPart) ? hasPart : hasPart ? [hasPart] : [];
+    if (partsList.length === 0) {
+      addDiagnostic(
+        diagnostics,
+        {
+          id: HELMET_SEO_RULE_IDS.PAYWALL_CLOAKING_WARNING,
+          message: "Paywalled content (isAccessibleForFree: false) lacks 'hasPart' section definitions for anti-cloaking.",
+          source: createSource("script", tag, "innerHTML", index),
+        },
+        "warning",
+        options,
+      );
+    } else {
+      for (const part of partsList) {
+        if (typeof part === "object" && part !== null && typeof (part as any).cssSelector === "string") {
+          if (!isValidCssSelector((part as any).cssSelector)) {
+            addDiagnostic(
+              diagnostics,
+              {
+                id: HELMET_SEO_RULE_IDS.PAYWALL_INVALID_SELECTOR,
+                message: `Paywalled content contains invalid CSS selector syntax "${(part as any).cssSelector}".`,
+                source: createSource("script", tag, "innerHTML", index),
+                value: (part as any).cssSelector,
+              },
+              "warning",
+              options,
+            );
+          }
+        }
+      }
+    }
+  }
+};
+
 const auditJsonLd = (
   state: HelmetState,
   options: AuditHelmetStateOptions,
@@ -1348,19 +1453,22 @@ const auditJsonLd = (
         return;
       }
 
-      const schemas = Array.isArray(parsed) ? parsed : [parsed];
-      schemas.forEach((schema) => {
-        if (typeof schema === "object" && schema !== null) {
-          const s = schema as Record<string, unknown>;
-          if (Array.isArray(s["@graph"])) {
-            (s["@graph"] as Record<string, unknown>[]).forEach((item) => {
-              if (typeof item === "object" && item !== null) {
-                graph.addEntity(item);
+          const schemas = Array.isArray(parsed) ? parsed : [parsed];
+          schemas.forEach((schema) => {
+            if (typeof schema === "object" && schema !== null) {
+              const s = schema as Record<string, unknown>;
+              if (Array.isArray(s["@graph"])) {
+                (s["@graph"] as Record<string, unknown>[]).forEach((item) => {
+                  if (typeof item === "object" && item !== null) {
+                    graph.addEntity(item);
+                    auditVerticalSchemas(item, tag, index, options, diagnostics);
+                  }
+                });
+              } else {
+                graph.addEntity(s);
+                auditVerticalSchemas(s, tag, index, options, diagnostics);
               }
-            });
-          } else {
-            graph.addEntity(s);
-          }
+
 
           const contextStr = String(s["@context"] ?? "").toLowerCase();
           if (!contextStr.includes("schema.org") && !s["@graph"]) {
