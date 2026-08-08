@@ -22,6 +22,14 @@ workflow commit, and is reachable from `main`. It then builds, packs, inspects,
 installs, and imports the exact tarball before publishing that same file. npm
 records an OIDC-backed provenance attestation in the public transparency log.
 
+After a new version reaches `main`, `tag-version.yml` creates the matching tag
+and GitHub Release, then explicitly dispatches `publish.yml` with that tag. The
+explicit dispatch is required because GitHub does not start another workflow
+from a tag pushed with the repository `GITHUB_TOKEN`. Direct tag pushes remain
+supported, and maintainers can manually dispatch `publish.yml` with an existing
+release tag to recover from a failed dispatch. All entry points run the same
+release identity checks before publishing.
+
 Consumers can verify registry signatures and provenance attestations in an
 installed project with:
 

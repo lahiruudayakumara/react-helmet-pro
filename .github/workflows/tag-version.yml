@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
       
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -16,7 +16,12 @@ concurrency:
 jobs:
   tag:
     if: github.repository_owner == 'opencorex-org'
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.pkg.outputs.release_tag }}
+      tag_created: ${{ steps.check_tag.outputs.tag_created }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.0
@@ -33,6 +38,7 @@ jobs:
         run: |
           VERSION="$(node -e "const v=require('./package.json').version;if(!/^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/.test(v)){console.error('Invalid package version:',v);process.exit(1)}process.stdout.write(v)")"
           echo "VERSION=v${VERSION}" >> "$GITHUB_ENV"
+          echo "release_tag=v${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag exists
         id: check_tag
@@ -40,9 +46,11 @@ jobs:
           if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
             echo "Tag $VERSION already exists."
             echo "EXISTS=true" >> $GITHUB_ENV
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
           else
             echo "Tag $VERSION does not exist."
             echo "EXISTS=false" >> $GITHUB_ENV
+            echo "tag_created=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Find previous tag
@@ -79,3 +87,17 @@ jobs:
           body_path: RELEASE_NOTES.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dispatch-publish:
+    needs: tag
+    if: needs.tag.outputs.tag_created == 'true' && github.repository_owner == 'opencorex-org'
+    permissions:
+      actions: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch npm publish workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.tag.outputs.release_tag }}
+        run: gh workflow run publish.yml --ref main -f tag="$RELEASE_TAG"
