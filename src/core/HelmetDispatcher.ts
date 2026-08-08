@@ -74,6 +74,14 @@ export class HelmetDispatcher {
     return this.currentState;
   }
 
+  getMiddlewareState() {
+    return reduceHelmetInstances(
+      Array.from(this.instances.entries())
+        .filter(([id]) => id !== MANUAL_INSTANCE_ID)
+        .map(([, instance]) => instance),
+    ).state;
+  }
+
   peek(): HelmetServerState {
     return buildServerState(this.currentState);
   }

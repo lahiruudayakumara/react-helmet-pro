@@ -1,8 +1,23 @@
-# Release Notes
+# Release 2.3.0
 
-This file summarizes the current branch changes and can be used as the release body for the next GitHub release.
+This release summarizes the changes since 2.2.0 and can be used as the GitHub release body for 2.3.0.
 
 ## What's Changed
+
+### Developer tooling
+
+- Added the `react-helmet-pro-audit` CLI with text, JSON, and SARIF output for local or remote SEO audits.
+- Added the `react-helmet-pro/eslint` plugin with recommended rules for titles, canonical links, duplicate metadata, and safe JSON-LD.
+- Added the development-only `HelmetInspector` for inspecting live head state, social previews, schemas, diagnostics, and history.
+- Added package exports for `react-helmet-pro/cli`, `react-helmet-pro/eslint`, and `react-helmet-pro/inspector`.
+
+### Stability and example fixes
+
+- Fixed infinite render loops in `useHelmetMiddleware` by preventing middleware from consuming its own generated state.
+- Fixed the inspector state and audit calculations to avoid unnecessary rerenders.
+- Added regression coverage for middleware feedback loops.
+- Fixed local package and subpath resolution across all TypeScript examples.
+- Added the playground favicon to the initial HTML document to prevent a development-time 404.
 
 ### React Helmet and SSR compatibility
 

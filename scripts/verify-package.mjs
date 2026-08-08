@@ -56,6 +56,10 @@ try {
     'package/dist/server/hono.js',
     'package/dist/server/index.js',
     'package/dist/adapters/index.js',
+    'package/dist/cli/index.js',
+    'package/dist/cli/bin.js',
+    'package/dist/eslint/index.js',
+    'package/dist/inspector/index.js',
   ];
 
   for (const entry of requiredEntries) {
@@ -102,7 +106,7 @@ try {
     [
       '--input-type=module',
       '--eval',
-      "const main = await import('react-helmet-pro'); const rr = await import('react-helmet-pro/react-router'); const remix = await import('react-helmet-pro/remix'); const astro = await import('react-helmet-pro/astro'); const viteSsr = await import('react-helmet-pro/vite-ssr'); const express = await import('react-helmet-pro/express'); const fastify = await import('react-helmet-pro/fastify'); const hono = await import('react-helmet-pro/hono'); const server = await import('react-helmet-pro/server'); const adapters = await import('react-helmet-pro/adapters'); if (!main.Helmet || !rr.toReactRouterMeta || !remix.toRemixMeta || !astro.collectAstroHead || !viteSsr.injectHelmetIntoHtml || !express.expressHelmetMiddleware || !fastify.fastifyHelmetPlugin || !hono.honoHelmetMiddleware || !server.extractXRobotsTagHeader || !adapters.toReactRouterMeta) throw new Error('Adapter exports are missing');",
+      "const main = await import('react-helmet-pro'); const rr = await import('react-helmet-pro/react-router'); const remix = await import('react-helmet-pro/remix'); const astro = await import('react-helmet-pro/astro'); const viteSsr = await import('react-helmet-pro/vite-ssr'); const express = await import('react-helmet-pro/express'); const fastify = await import('react-helmet-pro/fastify'); const hono = await import('react-helmet-pro/hono'); const server = await import('react-helmet-pro/server'); const adapters = await import('react-helmet-pro/adapters'); const cli = await import('react-helmet-pro/cli'); const eslint = await import('react-helmet-pro/eslint'); if (!main.Helmet || !rr.toReactRouterMeta || !remix.toRemixMeta || !astro.collectAstroHead || !viteSsr.injectHelmetIntoHtml || !express.expressHelmetMiddleware || !fastify.fastifyHelmetPlugin || !hono.honoHelmetMiddleware || !server.extractXRobotsTagHeader || !adapters.toReactRouterMeta || !cli.runAudit || !eslint.default) throw new Error('Adapter or tooling exports are missing');",
     ],
     { cwd: fixtureDirectory, stdio: 'inherit' },
   );

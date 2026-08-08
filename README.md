@@ -1721,6 +1721,130 @@ Injects a small set of security-oriented meta tags. The current built-in tag is:
 
 ---
 
+## Developer Tooling
+
+### CLI Audit Tool (`react-helmet-pro/cli`)
+
+Audit rendered HTML files, static directories, or remote URLs from CI pipelines or scripts.
+
+**Install & run:**
+```bash
+npx react-helmet-pro-audit --file=dist/index.html
+npx react-helmet-pro-audit --url=https://example.com --format=sarif
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--file=<path>` | Audit a local HTML file |
+| `--url=<url>` | Audit a remote URL (explicit opt-in, HTTPS recommended) |
+| `--format=text\|json\|sarif` | Output format (default: `text`) |
+| `--max-warnings=<n>` | Exit code 1 when warnings exceed this count |
+| `--timeout=<ms>` | Remote fetch timeout in milliseconds (default: 5000) |
+
+**Programmatic usage:**
+```ts
+import { runAudit } from 'react-helmet-pro/cli';
+
+const result = await runAudit(['dist/index.html'], { format: 'json', maxWarnings: 0 });
+process.exit(result.exitCode);
+```
+
+**SARIF output for GitHub Code Scanning:**
+```yaml
+# .github/workflows/seo-audit.yml
+- name: SEO Audit
+  run: npx react-helmet-pro-audit --file=dist/index.html --format=sarif > results.sarif
+
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v2
+  with:
+    sarif_file: results.sarif
+```
+
+> [!NOTE]
+> Remote URL auditing is explicitly opt-in. Always review security implications before auditing third-party URLs in CI.
+
+---
+
+### ESLint Plugin (`react-helmet-pro/eslint`)
+
+Static analysis rules for missing/conflicting metadata and unsafe JSON-LD serialization.
+
+**ESLint v9 flat config:**
+```js
+// eslint.config.mjs
+import reactHelmetPro from 'react-helmet-pro/eslint';
+
+export default [
+  ...reactHelmetPro.configs.recommended,
+];
+```
+
+**ESLint v8 legacy config:**
+```json
+{
+  "plugins": ["react-helmet-pro"],
+  "extends": ["plugin:react-helmet-pro/recommended"]
+}
+```
+
+**Rules:**
+
+| Rule | Severity (recommended) | Description |
+|------|------------------------|-------------|
+| `require-title` | `warn` | Enforce `title` or `defaultTitle` on Helmet/SEO components |
+| `no-duplicate-meta` | `warn` | Warn on duplicate singleton meta properties (e.g. two `og:title`) |
+| `safe-json-ld` | `error` | Prevent raw template literal XSS in `<script type="application/ld+json">` |
+| `require-canonical` | `off` | Recommend `canonical` prop on all SEO components |
+
+---
+
+### Browser Dev Inspector (`react-helmet-pro/inspector`)
+
+A floating development panel that shows live head state, social previews, structured data, diagnostics, and navigation history.
+
+> [!IMPORTANT]
+> The inspector **throws at import time when `NODE_ENV === 'production'`**. Always wrap with a dev guard or use dynamic imports.
+
+```tsx
+import { HelmetProvider } from 'react-helmet-pro';
+
+// Recommended: lazy load with a dev guard
+const HelmetInspector =
+  process.env.NODE_ENV !== 'production'
+    ? React.lazy(() =>
+        import('react-helmet-pro/inspector').then((m) => ({ default: m.HelmetInspector }))
+      )
+    : null;
+
+export function App() {
+  return (
+    <HelmetProvider>
+      <Routes />
+      {process.env.NODE_ENV !== 'production' && HelmetInspector && (
+        <React.Suspense fallback={null}>
+          <HelmetInspector position="bottom-right" maxHistory={20} />
+        </React.Suspense>
+      )}
+    </HelmetProvider>
+  );
+}
+```
+
+**Inspector tabs:**
+
+| Tab | Content |
+|-----|---------|
+| Overview | Title, description, canonical, robots, OG type, tag counts |
+| Social | Live Open Graph and Twitter card preview |
+| Schema | Formatted JSON-LD structured data entities |
+| Diagnostics | Live warnings and errors with rule IDs |
+| History | Navigation mutation log with timestamps |
+
+---
+
 ## Next.js Helpers
 
 These helpers return plain objects that fit modern Next.js App Router SEO APIs.

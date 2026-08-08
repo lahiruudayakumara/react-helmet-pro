@@ -32,7 +32,7 @@ describe("React Router Adapter", () => {
   });
 
   it("handles loader data with defineRouteSeo and createReactRouterMeta", () => {
-    const routeSeo = defineRouteSeo<{ title: string; desc: string }>((data) => ({
+    const routeSeo = defineRouteSeo<{ title: string; desc: string }>((data: { title: any; desc: any; }) => ({
       title: data.title,
       meta: [{ name: "description", content: data.desc }],
     }));
