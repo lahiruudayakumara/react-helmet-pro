@@ -53,4 +53,6 @@ export * from './utils/tagFactory';
 export * from './utils/urlNormalizer';
 export * from './utils/pagination';
 export * from './next';
+export * from './adapters';
 export * from './types';
+

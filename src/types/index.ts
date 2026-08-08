@@ -9,3 +9,4 @@ export * from "./sitemap";
 export * from "./tags";
 export * from "./urlPolicy";
 export * from "./verticalSeo";
+export * from "./adapters";

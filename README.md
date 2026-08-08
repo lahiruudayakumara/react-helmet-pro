@@ -84,6 +84,23 @@ If you are using App Router, Next.js itself is the best fit for canonical SEO fi
 
 ---
 
+## Framework Compatibility Matrix
+
+All framework and server adapters are provided via dedicated subpath entry points (`react-helmet-pro/react-router`, `react-helmet-pro/remix`, `react-helmet-pro/astro`, `react-helmet-pro/vite-ssr`, `react-helmet-pro/express`, `react-helmet-pro/fastify`, `react-helmet-pro/hono`, `react-helmet-pro/server`, `react-helmet-pro/adapters`) ensuring **zero core bundle impact** when unused.
+
+| Framework / Runtime | Adapter Entry Point | Capabilities & Feature Surface |
+|---------------------|---------------------|--------------------------------|
+| **React Router (v6 / v7)** | `react-helmet-pro/react-router` | Route `meta` descriptor array builder, loader data helper (`defineRouteSeo`), `createReactRouterMeta` |
+| **Remix** | `react-helmet-pro/remix` | `toRemixMeta`, `toRemixLinks`, `toRemixHeaders` (`X-Robots-Tag`, CSP, HTTP equiv) |
+| **Astro** | `react-helmet-pro/astro` | `collectAstroHead`, `renderAstroHeadToString`, `getAstroRobotsHeader` for Astro SSR |
+| **Vite SSR** | `react-helmet-pro/vite-ssr` | Template injection (`injectHelmetIntoHtml`), streaming stream transform (`createViteSsrStreamTransform`), early head flush markers |
+| **Express** | `react-helmet-pro/express` | Request-isolated context (`req.helmet`), `res.locals.helmet`, response finish cleanup, automatic `X-Robots-Tag` |
+| **Fastify** | `react-helmet-pro/fastify` | Fastify plugin with `request.helmet`, `onSend`/`onResponse` cleanup, automatic `X-Robots-Tag` header |
+| **Hono** | `react-helmet-pro/hono` | Hono middleware (`c.set('helmet', ...)`), response finish cleanup, automatic `X-Robots-Tag` header (`c.header(...)`) |
+
+
+---
+
 # Basic Usage
 
 ### Wrap Your App
@@ -1901,7 +1918,125 @@ const serverHelmet = collectHelmetTags(helmetContext);
 
 ---
 
+## Ecosystem Adapters & Server Middlewares
+
+### React Router Adapter (`react-helmet-pro/react-router`)
+
+Convert `react-helmet-pro` state or loader data into React Router (v6/v7) route metadata arrays.
+
+```typescript
+import { createReactRouterMeta, defineRouteSeo } from 'react-helmet-pro/react-router';
+
+export const meta = createReactRouterMeta(
+  defineRouteSeo(({ data }) => ({
+    title: data.product.title,
+    meta: [
+      { name: 'description', content: data.product.description },
+      { property: 'og:image', content: data.product.image },
+    ],
+    link: [{ rel: 'canonical', href: data.product.canonical }],
+  }))
+);
+```
+
+### Remix Adapter (`react-helmet-pro/remix`)
+
+Convert `react-helmet-pro` state into Remix-compatible `meta()`, `links()`, and `headers()` export objects.
+
+```typescript
+import { toRemixMeta, toRemixLinks, toRemixHeaders } from 'react-helmet-pro/remix';
+
+export const meta = () => toRemixMeta({
+  title: 'Remix Dashboard',
+  meta: [{ name: 'description', content: 'Remix app with React Helmet Pro' }],
+});
+
+export const links = () => toRemixLinks([
+  { rel: 'canonical', href: 'https://example.com/dashboard' },
+  { rel: 'icon', href: '/favicon.ico' },
+]);
+
+export const headers = () => toRemixHeaders({
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+});
+```
+
+### Astro Adapter (`react-helmet-pro/astro`)
+
+Collect structured head tags and string representations for Astro SSR templates.
+
+```typescript
+import { collectAstroHead, renderAstroHeadToString, getAstroRobotsHeader } from 'react-helmet-pro/astro';
+
+// Render head HTML directly into Astro template
+const headHtml = renderAstroHeadToString(helmetState);
+
+// Extract X-Robots-Tag header for Astro SSR endpoints
+const headers = getAstroRobotsHeader({ index: false, follow: true });
+```
+
+### Vite SSR Adapter (`react-helmet-pro/vite-ssr`)
+
+Inject helmet head tags and html/body attributes into Vite HTML templates or stream chunks.
+
+```typescript
+import { injectHelmetIntoHtml, createViteSsrStreamTransform } from 'react-helmet-pro/vite-ssr';
+
+// 1. Template String Injection
+const html = injectHelmetIntoHtml(indexHtmlTemplate, helmetData, {
+  headPlaceholder: '<!--helmet-head-->',
+  htmlAttributesPlaceholder: '<!--helmet-html-attributes-->',
+  bodyAttributesPlaceholder: '<!--helmet-body-attributes-->',
+});
+
+// 2. Streaming HTML TransformStream
+const stream = createViteSsrStreamTransform(helmetData, {
+  flushMarker: '<!--helmet-head-flush-->',
+});
+```
+
+#### Streaming Flush Behavior
+When using `createViteSsrStreamTransform`, the transform stream monitors outgoing HTML chunks. Upon encountering the `flushMarker` or closing `</head>` tag, prioritized head elements (`<title>`, `<meta charset>`, `<meta name="viewport">`, resource preloads) are flushed immediately before the shell body is rendered.
+
+### Server Runtimes & Request Isolation (`react-helmet-pro/server`)
+
+Request-isolated middlewares for Express, Fastify, and Hono with automatic `X-Robots-Tag` header generation and error cleanup.
+
+#### Express
+```typescript
+import { expressHelmetMiddleware } from 'react-helmet-pro/express';
+
+app.use(expressHelmetMiddleware({ autoXRobotsTag: true }));
+
+app.get('/', (req, res) => {
+  const helmetData = req.helmet; // Isolated per request
+  res.send('...');
+});
+```
+
+#### Fastify
+```typescript
+import { fastifyHelmetPlugin } from 'react-helmet-pro/fastify';
+
+fastify.register(fastifyHelmetPlugin({ autoXRobotsTag: true }));
+```
+
+#### Hono
+```typescript
+import { honoHelmetMiddleware } from 'react-helmet-pro/hono';
+
+app.use('*', honoHelmetMiddleware({ autoXRobotsTag: true }));
+
+app.get('/', (c) => {
+  const helmet = c.get('helmet');
+  return c.text('Hono SSR');
+});
+```
+
+---
+
 ## Testing
+
 
 Test with Vitest + React Testing Library.
 
