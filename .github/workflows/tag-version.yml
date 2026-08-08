@@ -100,4 +100,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ needs.tag.outputs.release_tag }}
-        run: gh workflow run publish.yml --ref main -f tag="$RELEASE_TAG"
+        run: gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref main -f tag="$RELEASE_TAG"
