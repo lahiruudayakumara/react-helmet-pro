@@ -2,6 +2,7 @@
 
 import { DependencyList, useEffect } from "react";
 
+import { HelmetDispatcher } from "../core/HelmetDispatcher";
 import { useHelmet } from "./useHelmet";
 
 export const useHelmetMiddleware = (
@@ -11,7 +12,16 @@ export const useHelmetMiddleware = (
   const helmet = useHelmet();
 
   useEffect(() => {
-    const nextState = middleware?.(helmet);
+    const middlewareHead =
+      helmet.dispatcher instanceof HelmetDispatcher
+        ? {
+            ...helmet.dispatcher.getMiddlewareState(),
+            defaults: helmet.defaults,
+            dispatcher: helmet.dispatcher,
+            setHead: helmet.setHead,
+          }
+        : helmet;
+    const nextState = middleware?.(middlewareHead);
 
     if (nextState && typeof nextState === "object") {
       helmet.setHead(nextState);
