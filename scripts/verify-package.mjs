@@ -47,6 +47,15 @@ try {
     'package/README.md',
     'package/dist/index.js',
     'package/dist/index.d.ts',
+    'package/dist/react-router/index.js',
+    'package/dist/remix/index.js',
+    'package/dist/astro/index.js',
+    'package/dist/vite-ssr/index.js',
+    'package/dist/server/express.js',
+    'package/dist/server/fastify.js',
+    'package/dist/server/hono.js',
+    'package/dist/server/index.js',
+    'package/dist/adapters/index.js',
   ];
 
   for (const entry of requiredEntries) {
@@ -93,10 +102,11 @@ try {
     [
       '--input-type=module',
       '--eval',
-      "const packageModule = await import('react-helmet-pro'); if (!packageModule.Helmet) throw new Error('Helmet export is missing');",
+      "const main = await import('react-helmet-pro'); const rr = await import('react-helmet-pro/react-router'); const remix = await import('react-helmet-pro/remix'); const astro = await import('react-helmet-pro/astro'); const viteSsr = await import('react-helmet-pro/vite-ssr'); const express = await import('react-helmet-pro/express'); const fastify = await import('react-helmet-pro/fastify'); const hono = await import('react-helmet-pro/hono'); const server = await import('react-helmet-pro/server'); const adapters = await import('react-helmet-pro/adapters'); if (!main.Helmet || !rr.toReactRouterMeta || !remix.toRemixMeta || !astro.collectAstroHead || !viteSsr.injectHelmetIntoHtml || !express.expressHelmetMiddleware || !fastify.fastifyHelmetPlugin || !hono.honoHelmetMiddleware || !server.extractXRobotsTagHeader || !adapters.toReactRouterMeta) throw new Error('Adapter exports are missing');",
     ],
     { cwd: fixtureDirectory, stdio: 'inherit' },
   );
+
 
   const artifactDirectory = join(projectRoot, '.artifacts');
   const repositoryTarball = join(artifactDirectory, basename(tarballPath));

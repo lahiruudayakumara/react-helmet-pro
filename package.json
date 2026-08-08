@@ -8,6 +8,48 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react-router": {
+      "types": "./dist/react-router/index.d.ts",
+      "default": "./dist/react-router/index.js"
+    },
+    "./remix": {
+      "types": "./dist/remix/index.d.ts",
+      "default": "./dist/remix/index.js"
+    },
+    "./astro": {
+      "types": "./dist/astro/index.d.ts",
+      "default": "./dist/astro/index.js"
+    },
+    "./vite-ssr": {
+      "types": "./dist/vite-ssr/index.d.ts",
+      "default": "./dist/vite-ssr/index.js"
+    },
+    "./express": {
+      "types": "./dist/server/express.d.ts",
+      "default": "./dist/server/express.js"
+    },
+    "./fastify": {
+      "types": "./dist/server/fastify.d.ts",
+      "default": "./dist/server/fastify.js"
+    },
+    "./hono": {
+      "types": "./dist/server/hono.d.ts",
+      "default": "./dist/server/hono.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "default": "./dist/adapters/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "dev": "vite --config examples/vite.config.examples.ts",

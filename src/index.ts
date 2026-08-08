@@ -46,4 +46,6 @@ export * from './utils/seoDefaults';
 export * from './utils/tagFactory';
 export * from './utils/urlNormalizer';
 export * from './next';
+export * from './adapters';
 export * from './types';
+
