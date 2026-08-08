@@ -115,3 +115,39 @@ export const buildXRobotsTagHeader = (
     "X-Robots-Tag": headerValue,
   };
 };
+
+export const extractXRobotsTagHeader = (
+  value?: unknown,
+): Record<string, string> => {
+  if (!value) {
+    return {};
+  }
+
+  let stateObj: any = value;
+  if (typeof stateObj === "object" && stateObj !== null && "getState" in stateObj && typeof stateObj.getState === "function") {
+    stateObj = stateObj.getState();
+  }
+
+  if (typeof stateObj === "object" && stateObj !== null && "meta" in stateObj) {
+    const metaList = Array.isArray(stateObj.meta) ? stateObj.meta : undefined;
+    if (metaList) {
+      const parts: string[] = [];
+      for (const tag of metaList) {
+        if (tag && typeof tag === "object" && tag.name && tag.content) {
+          const nameLower = String(tag.name).toLowerCase();
+          if (nameLower === "robots") {
+            parts.push(String(tag.content));
+          } else if (nameLower === "googlebot" || nameLower === "bingbot" || nameLower === "duckduckbot") {
+            parts.push(`${nameLower}: ${tag.content}`);
+          }
+        }
+      }
+      if (parts.length > 0) {
+        return { "X-Robots-Tag": parts.join(", ") };
+      }
+    }
+  }
+
+  return buildXRobotsTagHeader(value as SeoRobotsDirectives);
+};
+
