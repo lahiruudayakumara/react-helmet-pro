@@ -4,7 +4,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useRef,
+  useMemo,
   useState,
 } from "react";
 import { auditHelmetState } from "../core/auditHelmetState";
@@ -114,51 +114,59 @@ export const HelmetInspector: React.FC<HelmetInspectorProps> = ({
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const [history, setHistory] = useState<InspectorHistoryEntry[]>([]);
-  const prevStateRef = useRef<HelmetState | null>(null);
 
-  const state: HelmetState | null = ctx
-    ? {
-        base: ctx.base,
-        bodyAttributes: ctx.bodyAttributes,
-        defer: ctx.defer,
-        encodeSpecialCharacters: ctx.encodeSpecialCharacters,
-        htmlAttributes: ctx.htmlAttributes,
-        link: ctx.link,
-        meta: ctx.meta,
-        noscript: ctx.noscript,
-        prioritizeSeoTags: ctx.prioritizeSeoTags,
-        script: ctx.script,
-        style: ctx.style,
-        title: ctx.title,
-        titleAttributes: ctx.titleAttributes,
-      }
-    : null;
+  // Stable primitive deps to avoid effect firing on new object identity every render
+  const ctxTitle = ctx?.title;
+  const ctxMetaLen = ctx?.meta.length ?? 0;
+  const ctxLinkLen = ctx?.link.length ?? 0;
+  const ctxScriptLen = ctx?.script.length ?? 0;
 
-  const audit = state
-    ? auditHelmetState(state, { context: "seo" })
-    : { diagnostics: [], errors: [], warnings: [], suggestions: [], valid: true };
+  // Memoize the state shape so we don't create a new object on every render
+  const state: HelmetState | null = useMemo(
+    () =>
+      ctx
+        ? {
+            base: ctx.base,
+            bodyAttributes: ctx.bodyAttributes,
+            defer: ctx.defer,
+            encodeSpecialCharacters: ctx.encodeSpecialCharacters,
+            htmlAttributes: ctx.htmlAttributes,
+            link: ctx.link,
+            meta: ctx.meta,
+            noscript: ctx.noscript,
+            prioritizeSeoTags: ctx.prioritizeSeoTags,
+            script: ctx.script,
+            style: ctx.style,
+            title: ctx.title,
+            titleAttributes: ctx.titleAttributes,
+          }
+        : null,
+    // Only recompute when real head data changes (stable primitives)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ctxTitle, ctxMetaLen, ctxLinkLen, ctxScriptLen],
+  );
+
+  // Memoize audit result to avoid re-running on every render
+  const audit = useMemo(
+    () =>
+      state
+        ? auditHelmetState(state, { context: "seo" })
+        : { diagnostics: [], errors: [], warnings: [], suggestions: [], valid: true },
+    [state],
+  );
 
   useEffect(() => {
     if (!state) return;
-    const prev = prevStateRef.current;
-    const stateChanged =
-      !prev ||
-      prev.title !== state.title ||
-      prev.meta.length !== state.meta.length ||
-      prev.link.length !== state.link.length;
-
-    if (stateChanged) {
-      prevStateRef.current = state;
-      const entry: InspectorHistoryEntry = {
-        state: { ...state, meta: [...state.meta], link: [...state.link] },
-        audit: auditHelmetState(state, { context: "seo" }),
-        timestamp: Date.now(),
-        url:
-          typeof window !== "undefined" ? window.location.href : "unknown",
-      };
-      setHistory((h) => [entry, ...h].slice(0, maxHistory));
-    }
-  }, [state, maxHistory]);
+    const entry: InspectorHistoryEntry = {
+      state: { ...state, meta: [...state.meta], link: [...state.link] },
+      audit,
+      timestamp: Date.now(),
+      url: typeof window !== "undefined" ? window.location.href : "unknown",
+    };
+    // Use functional update to avoid stale closure; maxHistory is a stable prop
+    setHistory((h) => [entry, ...h].slice(0, maxHistory));
+    // Only fire when actual head content changes (stable primitive deps)
+  }, [state, audit, maxHistory]);
 
   const toggle = useCallback(() => setOpen((o) => !o), []);
 
